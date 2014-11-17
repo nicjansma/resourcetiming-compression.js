@@ -1,0 +1,32 @@
+{
+  "name": "resourcetiming-compression",
+  "description": "ResourceTiming compression and decompression",
+  "main": "./src/resourcetiming-compression",
+  "author": "Nic Jansma",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/nicjansma/resourcetiming-compression.js.git"
+  },
+  "bugs": {
+    "url": "http://github.com/nicjansma/resourcetiming-compression.js/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/nicjansma/resourcetiming-compression.js/raw/master/LICENSE"
+    }
+  ],
+  "scripts": {
+    "test": "gulp travis --verbose"
+  },
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "gulp": "^3.8.10",
+    "gulp-eslint": "^0.1.8",
+    "gulp-mocha": "^1.1.1",
+    "gulp-rename": "^1.2.0",
+    "gulp-uglify": "^1.0.1",
+    "mocha": "^2.0.1"
+  }
+}

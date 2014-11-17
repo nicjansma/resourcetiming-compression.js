@@ -1,0 +1,26 @@
+{
+  "name": "resourcetiming-compression",
+  "version": "0.1.0",
+  "homepage": "https://github.com/nicjansma/resourcetiming-compression.js",
+  "authors": [
+    "Nic Jansma <nic@nicj.net>",
+    "Philip Tellis <philip@bluesmoon.info>"
+  ],
+  "description": "ResourceTiming compression and decompression",
+  "main": "src/resourcetiming-compression.js",
+  "keywords": [
+    "resourcetiming",
+    "compress",
+    "resources"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "gulpfile.js",
+    "deps",
+    "dist",
+    "node_modules",
+    "bower_components",
+    "test"
+  ]
+}
