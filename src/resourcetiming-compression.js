@@ -395,4 +395,4 @@
         //
         root.ResourceTimingCompression = ResourceTimingCompression;
     }
-}(typeof(window) !== "undefined" ? window : undefined));
+}(typeof window !== "undefined" ? window : undefined));

@@ -197,4 +197,4 @@
         //
         root.ResourceTimingDecompression = ResourceTimingDecompression;
     }
-}(typeof(window) !== "undefined" ? window : undefined));
+}(typeof window !== "undefined" ? window : undefined));
