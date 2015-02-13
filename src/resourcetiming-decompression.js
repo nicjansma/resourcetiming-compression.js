@@ -133,15 +133,15 @@
         // special case timestamps
         var startTime = timings.length >= 1 ? timings[0] : 0;
 
-        // redirect timings are 10th and 11th array values
-        var fetchStart = timings.length < 10 ? startTime : this.decodeCompressedResourceTimeStamp(timings, 10, startTime);
+        // fetchStart is either the redirectEnd time, or startTime
+        var fetchStart = timings.length < 10 ? startTime : this.decodeCompressedResourceTimeStamp(timings, 9, startTime);
 
         // all others are offset from startTime
         var res = {
             name: url,
             initiatorType: this.getInitiatorTypeFromIndex(initiatorType),
             startTime: startTime,
-            redirectStart: this.decodeCompressedResourceTimeStamp(timings, 10, startTime),
+            redirectStart: this.decodeCompressedResourceTimeStamp(timings, 9, startTime) > 0 ? startTime : 0,
             redirectEnd: this.decodeCompressedResourceTimeStamp(timings, 9, startTime),
             fetchStart: fetchStart,
             domainLookupStart: this.decodeCompressedResourceTimeStamp(timings, 8, startTime),
