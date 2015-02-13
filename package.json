@@ -3,7 +3,7 @@
   "description": "ResourceTiming compression and decompression",
   "main": "./src/resourcetiming-compression",
   "author": "Nic Jansma",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "http://github.com/nicjansma/resourcetiming-compression.js.git"
