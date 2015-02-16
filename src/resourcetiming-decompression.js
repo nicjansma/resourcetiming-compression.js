@@ -116,7 +116,7 @@
             return {};
         }
 
-        var initiatorType = data[0];
+        var initiatorType = parseInt(data[0]);
         var timings = data.length > 1 ? data.substring(1).split(",") : [];
 
         // convert all timings from base36
