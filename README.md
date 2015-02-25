@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v0.1.1
+v0.1.2
 
 [http://nicj.net](http://nicj.net)
 
@@ -100,5 +100,6 @@ Or via ``gulp``:
 
 ## Version History
 
+* v0.1.2 - 2015-02-25: Fixed initiatorType parsing
 * v0.1.1 - 2015-02-13: Fixed how redirectStart and fetchStart are calculated
 * v0.1.0 - 2014-10-17: Initial version
