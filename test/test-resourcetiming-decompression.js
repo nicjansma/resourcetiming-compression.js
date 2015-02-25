@@ -56,12 +56,12 @@
         // .decompressResources
         //
         describe(".decompressResources()", function() {
-            var compressedTimestamps = "01,7,6,5,5,4,3,3,2,1,0";
+            var compressedTimestamps = "31,7,6,5,5,4,3,3,2,1,0";
 
             function getTimestampsFor(url) {
                 return {
                     name: url,
-                    initiatorType: "other",
+                    initiatorType: "script",
                     startTime: 1,
                     redirectStart: 1,
                     redirectEnd: 2,
