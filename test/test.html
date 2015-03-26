@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>resourcetiming-compression.js Test Suite</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="vendor/mocha/mocha.css" />
+        <script src="vendor/mocha/mocha.js"></script>
+        <script src="vendor/expect/index.js"></script>
+        <script src="../src/resourcetiming-compression.js"></script>
+        <script src="../src/resourcetiming-decompression.js"></script>
+    </head>
+    <body>
+        <div id="mocha"></div>
+        <script>
+            mocha.setup('bdd');
+        </script>
+        <script src="test-resourcetiming-compression.js"></script>
+        <script src="test-resourcetiming-decompression.js"></script>
+        <script>
+            mocha.run();
+        </script>
+  </body>
+</html>

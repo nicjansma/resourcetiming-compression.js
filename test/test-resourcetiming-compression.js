@@ -1,9 +1,19 @@
 /* eslint-env node, mocha */
-(function() {
+(function(root) {
     "use strict";
 
-    var expect = require("expect.js");
-    var ResourceTimingCompression = require("../src/resourcetiming-compression");
+    //
+    // Run in either Mocha, Karma or Browser environments
+    //
+    if (typeof root === "undefined") {
+        root = {};
+    }
+
+    var ResourceTimingCompression = root.ResourceTimingCompression ?
+        root.ResourceTimingCompression :
+        require("../src/resourcetiming-compression");
+
+    var expect = root.expect ? root.expect : require("expect.js");
 
     //
     // ResourceTimingCompression
@@ -153,4 +163,4 @@
             });
         });
     });
-})();
+}(typeof window !== "undefined" ? window : undefined));

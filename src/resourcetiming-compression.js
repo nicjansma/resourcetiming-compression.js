@@ -27,6 +27,8 @@
     /**
      * Changes the value of ResourceTimingCompression back to its original value, returning
      * a reference to the ResourceTimingCompression object.
+     *
+     * @returns {object} Original ResourceTimingCompression object
      */
     ResourceTimingCompression.noConflict = function() {
         root.ResourceTimingCompression = previousObj;
@@ -58,8 +60,8 @@
      *
      * If key A is a prefix to key B, key A will be suffixed with "|"
      *
-     * @param [object] entries Performance entries
-     * @return A trie
+     * @param {object} entries Performance entries
+     * @returns {object} A trie
      */
     ResourceTimingCompression.convertToTrie = function(entries) {
         var trie = {}, url, i, value, letters, letter, cur, node;
@@ -102,8 +104,10 @@
     /**
      * Optimize the Trie by combining branches with no leaf
      *
-     * @param [object] cur Current Trie branch
-     * @param [boolean] top Whether or not this is the root node
+     * @param {object} cur Current Trie branch
+     * @param {boolean} top Whether or not this is the root node
+     *
+     * @returns {object} Optimized Trie
      */
     ResourceTimingCompression.optimizeTrie = function(cur, top) {
         var num = 0, node, ret, topNode;
@@ -145,9 +149,10 @@
     /**
      * Trims the timing, returning an offset from the startTime in ms
      *
-     * @param [number] time Time
-     * @param [number] startTime Start time
-     * @return [number] Number of ms from start time
+     * @param {number} time Time
+     * @param {number} startTime Start time
+     *
+     * @returns {number} Number of ms from start time
      */
     ResourceTimingCompression.trimTiming = function(time, startTime) {
         if (typeof time !== "number") {
@@ -167,22 +172,22 @@
 
     /**
      * Attempts to get the navigationStart time for a frame.
-     * @returns navigationStart time, or 0 if not accessible
+     *
+     * @param {Frame} frame IFRAME
+     *
+     * @returns {number} navigationStart time, or 0 if not accessible
      */
     ResourceTimingCompression.getNavStartTime = function(frame) {
         var navStart = 0;
 
-        try
-        {
+        try {
             if (("performance" in frame) &&
             frame.performance &&
             frame.performance.timing &&
             frame.performance.timing.navigationStart) {
                 navStart = frame.performance.timing.navigationStart;
             }
-        }
-        catch(e)
-        {
+        } catch(e) {
             // swallow all access exceptions
         }
 
@@ -192,10 +197,11 @@
     /**
      * Gets all of the performance entries for a frame and its subframes
      *
-     * @param [Frame] frame Frame
-     * @param [boolean] top This is the top window
-     * @param [string] offset Offset in timing from root IFRA
-     * @return [PerformanceEntry[]] Performance entries
+     * @param {Frame} frame Frame
+     * @param {boolean} isTopWindow This is the top window
+     * @param {string} offset Offset in timing from root IFRA
+     *
+     * @returns {PerformanceEntry[]} Performance entries
      */
     ResourceTimingCompression.findPerformanceEntriesForFrame = function(frame, isTopWindow, offset) {
         var entries = [], i, navEntries, navStart, frameNavStart, frameOffset, navEntry, t;
@@ -244,7 +250,7 @@
                         responseStart: navEntry.responseStart,
                         responseEnd: navEntry.responseEnd
                     });
-                } else if (frame.performance.timing){
+                } else if (frame.performance.timing) {
                     // add a fake entry from the timing object
                     t = frame.performance.timing;
                     entries.push({
@@ -256,7 +262,9 @@
                         domainLookupStart: t.domainLookupStart ? (t.domainLookupStart - t.navigationStart) : 0,
                         domainLookupEnd: t.domainLookupEnd ? (t.domainLookupEnd - t.navigationStart) : 0,
                         connectStart: t.connectStart ? (t.connectStart - t.navigationStart) : 0,
-                        secureConnectionStart: t.secureConnectionStart ? (t.secureConnectionStart - t.navigationStart) : 0,
+                        secureConnectionStart: t.secureConnectionStart ?
+                            (t.secureConnectionStart - t.navigationStart) :
+                            0,
                         connectEnd: t.connectEnd ? (t.connectEnd - t.navigationStart) : 0,
                         requestStart: t.requestStart ? (t.requestStart - t.navigationStart) : 0,
                         responseStart: t.responseStart ? (t.responseStart - t.navigationStart) : 0,
@@ -290,8 +298,7 @@
             }
 
             entries = entries.concat(frameFixedEntries);
-        }
-        catch(e) {
+        } catch(e) {
             return entries;
         }
 
@@ -301,8 +308,8 @@
     /**
      * Converts a number to base-36
      *
-     * @param [number] n Number
-     * @return Base-36 number, or empty string if undefined.
+     * @param {number} n Number
+     * @returns {number|string} Base-36 number, or empty string if undefined.
      */
     ResourceTimingCompression.toBase36 = function(n) {
         return (typeof n === "number") ? n.toString(36) : "";
@@ -310,7 +317,7 @@
 
     /**
      * Gathers performance entries and optimizes the result.
-     * @return Optimized performance entries trie
+     * @returns {object} Optimized performance entries trie
      */
     ResourceTimingCompression.getResourceTiming = function() {
         /*eslint no-script-url:0*/

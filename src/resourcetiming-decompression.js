@@ -27,6 +27,8 @@
     /**
      * Changes the value of ResourceTimingDecompression back to its original value, returning
      * a reference to the ResourceTimingDecompression object.
+     *
+     * @returns {object} Original ResourceTimingDecompression object
      */
     ResourceTimingDecompression.noConflict = function() {
         root.ResourceTimingDecompression = previousObj;
@@ -48,10 +50,10 @@
     /**
      * Decompresses a compressed ResourceTiming trie
      *
-     * @param rt ResourceTiming trie
-     * @param prefix URL prefix for the current node
+     * @param {object} rt ResourceTiming trie
+     * @param {string} prefix URL prefix for the current node
      *
-     * @return [ResourceTiming[]] ResourceTiming array
+     * @returns {ResourceTiming[]} ResourceTiming array
      */
     ResourceTimingDecompression.decompressResources = function(rt, prefix) {
         var resources = [];
@@ -67,7 +69,8 @@
             var node = rt[key];
             var nodeKey = prefix + key;
 
-            // strip trailing pipe, which is used to designate a node that is a prefix for other nodes but has resTiming data
+            // strip trailing pipe, which is used to designate a node that is a prefix for
+            // other nodes but has resTiming data
             if (nodeKey.indexOf("|", nodeKey.length - 1) !== -1) {
                 nodeKey = nodeKey.substring(0, nodeKey.length - 1);
             }
@@ -94,7 +97,9 @@
     /**
      * Determines the initiatorType from a lookup
      *
-     * @return [string] initiatorType, or "other" if not known
+     * @param {number} index Initiator type index
+     *
+     * @returns {string} initiatorType, or "other" if not known
      */
     ResourceTimingDecompression.getInitiatorTypeFromIndex = function(index) {
         for (var initiatorType in this.INITIATOR_TYPES) {
@@ -109,14 +114,18 @@
     /**
      * Decodes a compressed ResourceTiming data string
      *
-     * @return [ResourceTiming] ResourceTiming pseudo-object (containing all of the properties of a ResourceTiming object)
+     * @param {string} data Compressed timing data
+     * @param {string} url  URL
+     *
+     * @returns {ResourceTiming} ResourceTiming pseudo-object (containing all of the properties of a
+     * ResourceTiming object)
      */
     ResourceTimingDecompression.decodeCompressedResource = function(data, url) {
         if (!data || !url) {
             return {};
         }
 
-        var initiatorType = parseInt(data[0]);
+        var initiatorType = parseInt(data[0], 10);
         var timings = data.length > 1 ? data.substring(1).split(",") : [];
 
         // convert all timings from base36
@@ -134,7 +143,9 @@
         var startTime = timings.length >= 1 ? timings[0] : 0;
 
         // fetchStart is either the redirectEnd time, or startTime
-        var fetchStart = timings.length < 10 ? startTime : this.decodeCompressedResourceTimeStamp(timings, 9, startTime);
+        var fetchStart = timings.length < 10 ?
+            startTime :
+            this.decodeCompressedResourceTimeStamp(timings, 9, startTime);
 
         // all others are offset from startTime
         var res = {
@@ -162,9 +173,11 @@
     /**
      * Decodes a timestamp from a compressed RT array
      *
-     * @param [number[]] timings ResourceTiming timings
-     * @param [number] idx Index into array
-     * @param [number] startTime NavigationTiming The Resource's startTime
+     * @param {number[]} timings ResourceTiming timings
+     * @param {number} idx Index into array
+     * @param {number} startTime NavigationTiming The Resource's startTime
+     *
+     * @returns {number} Timestamp, or 0 if unknown or missing
      */
     ResourceTimingDecompression.decodeCompressedResourceTimeStamp = function(timings, idx, startTime) {
         if (timings && timings.length >= (idx + 1)) {
@@ -173,7 +186,7 @@
             }
         }
 
-      return 0;
+        return 0;
     };
 
     //

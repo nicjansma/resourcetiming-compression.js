@@ -1,9 +1,19 @@
 /* eslint-env node, mocha */
-(function() {
+(function(root) {
     "use strict";
 
-    var expect = require("expect.js");
-    var ResourceTimingDecompression = require("../src/resourcetiming-decompression");
+    //
+    // Run in either Mocha, Karma or Browser environments
+    //
+    if (typeof root === "undefined") {
+        root = {};
+    }
+
+    var ResourceTimingDecompression = root.ResourceTimingDecompression ?
+        root.ResourceTimingDecompression :
+        require("../src/resourcetiming-decompression");
+
+    var expect = root.expect ? root.expect : require("expect.js");
 
     //
     // ResourceTimingDecompression
@@ -30,7 +40,8 @@
             });
 
             it("should give the timestamp with multiple entries", function() {
-                expect(ResourceTimingDecompression.decodeCompressedResourceTimeStamp([100, 200, 300], 2, 100)).to.be(400);
+                expect(ResourceTimingDecompression.decodeCompressedResourceTimeStamp([100, 200, 300], 2, 100))
+                    .to.be(400);
             });
         });
 
@@ -118,4 +129,4 @@
             });
         });
     });
-})();
+}(typeof window !== "undefined" ? window : undefined));
