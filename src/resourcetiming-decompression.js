@@ -196,7 +196,7 @@
         //
         // AMD / RequireJS
         //
-        define([], function () {
+        define([], function() {
             return ResourceTimingDecompression;
         });
     } else if (typeof module !== "undefined" && module.exports) {

@@ -8,7 +8,7 @@ var rename = require("gulp-rename");
 var karma = require("karma").server;
 var path = require("path");
 
-gulp.task("lint", function () {
+gulp.task("lint", function() {
     gulp.src(["*.js", "src/*.js", "test/*.js"])
         .pipe(eslint())
         .pipe(eslint.format());
@@ -23,14 +23,14 @@ gulp.task("compress", function() {
         .pipe(gulp.dest("dist"));
 });
 
-gulp.task("mocha", function () {
+gulp.task("mocha", function() {
     gulp.src("test/*.js", {read: false})
         .pipe(mocha({
             reporter: "tap"
         }));
 });
 
-gulp.task("karma", function (done) {
+gulp.task("karma", function(done) {
     karma.start({
         configFile: path.join(__dirname, "karma.config.js"),
         singleRun: true

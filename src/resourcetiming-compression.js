@@ -187,7 +187,7 @@
             frame.performance.timing.navigationStart) {
                 navStart = frame.performance.timing.navigationStart;
             }
-        } catch(e) {
+        } catch (e) {
             // swallow all access exceptions
         }
 
@@ -298,7 +298,7 @@
             }
 
             entries = entries.concat(frameFixedEntries);
-        } catch(e) {
+        } catch (e) {
             return entries;
         }
 
@@ -320,7 +320,7 @@
      * @returns {object} Optimized performance entries trie
      */
     ResourceTimingCompression.getResourceTiming = function() {
-        /*eslint no-script-url:0*/
+        /* eslint no-script-url:0 */
         var entries = this.findPerformanceEntriesForFrame(window, true, 0),
             i, e, results = {}, initiatorType, url, data;
 
@@ -388,7 +388,7 @@
         //
         // AMD / RequireJS
         //
-        define([], function () {
+        define([], function() {
             return ResourceTimingCompression;
         });
     } else if (typeof module !== "undefined" && module.exports) {
