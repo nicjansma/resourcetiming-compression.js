@@ -11,12 +11,7 @@
   "bugs": {
     "url": "http://github.com/nicjansma/resourcetiming-compression.js/issues"
   },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "http://github.com/nicjansma/resourcetiming-compression.js/raw/master/LICENSE"
-    }
-  ],
+  "license": "MIT",
   "scripts": {
     "test": "gulp travis --verbose"
   },
