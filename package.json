@@ -23,7 +23,7 @@
   "devDependencies": {
     "expect.js": "^0.3.1",
     "gulp": "^3.8.10",
-    "gulp-eslint": "^0.1.8",
+    "gulp-eslint": "^1.0.0",
     "gulp-mocha": "^1.1.1",
     "gulp-rename": "^1.2.0",
     "gulp-uglify": "^1.0.1",
