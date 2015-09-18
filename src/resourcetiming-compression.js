@@ -321,12 +321,23 @@
      */
     ResourceTimingCompression.getResourceTiming = function() {
         /* eslint no-script-url:0 */
-        var entries = this.findPerformanceEntriesForFrame(window, true, 0),
-            i, e, results = {}, initiatorType, url, data;
+        var entries = this.findPerformanceEntriesForFrame(window, true, 0);
 
         if (!entries || !entries.length) {
             return [];
         }
+
+        return this.compressResourceTiming(entries);
+    }
+
+    /**
+     * Optimizes the specified set of performance entries.
+     * @param {object} entries Performance entries
+     * @returns {object} Optimized performance entries trie
+     */
+    ResourceTimingCompression.compressResourceTiming = function(entries) {
+        /* eslint no-script-url:0 */
+        var i, e, results = {}, initiatorType, url, data;
 
         for (i = 0; i < entries.length; i++) {
             e = entries[i];
