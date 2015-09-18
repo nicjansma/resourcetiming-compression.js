@@ -16,13 +16,13 @@
     "test": "gulp travis --verbose"
   },
   "devDependencies": {
+    "commander": "^2.8.1",
     "expect.js": "^0.3.1",
     "gulp": "^3.8.10",
     "gulp-eslint": "^1.0.0",
     "gulp-mocha": "^1.1.1",
     "gulp-rename": "^1.2.0",
     "gulp-uglify": "^1.0.1",
-    "mocha": "^2.0.1",
     "karma": "^0.12.31",
     "karma-chrome-launcher": "^0.1.5",
     "karma-coverage": "^0.2.6",
@@ -33,6 +33,7 @@
     "karma-opera-launcher": "^0.1.0",
     "karma-phantomjs-launcher": "^0.1.4",
     "karma-safari-launcher": "^0.1.1",
-    "karma-tap-reporter": "0.0.3"
+    "karma-tap-reporter": "0.0.3",
+    "mocha": "^2.0.1"
   }
 }
