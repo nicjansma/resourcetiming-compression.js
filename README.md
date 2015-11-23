@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v0.1.2
+v0.2.0
 
 [http://nicj.net](http://nicj.net)
 
@@ -64,6 +64,11 @@ To include resourcetiming-compression.js, simply include it via a script tag:
 
 Once included in the page, a top-level `ResourceTimingCompression` object is available on `window`.  If AMD or CommonJS environments are detected, it will simply expose itself via those methods.
 
+From the NPM module:
+```js
+var ResourceTimingCompression = require("resourcetiming-compression").ResourceTimingCompression;
+```
+
 To get all of the compressed resources, you can simply call:
 
 ```js
@@ -80,6 +85,10 @@ To include resourcetiming-decompression.js, simply include it via a script tag:
 
 Once included in the page, a top-level `ResourceTimingDecompression` object is available on `window`.  If AMD or CommonJS environments are detected, it will simply expose itself via those methods.
 
+From the NPM module:
+```js
+var ResourceTimingDecompression = require("resourcetiming-compression").ResourceTimingDecompression;
+```
 To decompress your resources, you can simply call:
 
 ```js
@@ -100,6 +109,7 @@ Or via ``gulp``:
 
 ## Version History
 
+* v0.2.0 - 2015-11-23: Export both ResourceTimingCompression and ResourceTimingDecompression from main module
 * v0.1.2 - 2015-02-25: Fixed initiatorType parsing
 * v0.1.1 - 2015-02-13: Fixed how redirectStart and fetchStart are calculated
 * v0.1.0 - 2014-10-17: Initial version
