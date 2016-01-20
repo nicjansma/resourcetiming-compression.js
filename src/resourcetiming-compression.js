@@ -328,7 +328,7 @@
         }
 
         return this.compressResourceTiming(entries);
-    }
+    };
 
     /**
      * Optimizes the specified set of performance entries.
