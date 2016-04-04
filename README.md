@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v0.2.0
+v0.2.1
 
 [http://nicj.net](http://nicj.net)
 
@@ -109,6 +109,7 @@ Or via ``gulp``:
 
 ## Version History
 
+* v0.2.1 - 2016-04-04: Protect against X-O frame access that crashes some browsers
 * v0.2.0 - 2015-11-23: Export both ResourceTimingCompression and ResourceTimingDecompression from main module
 * v0.1.2 - 2015-02-25: Fixed initiatorType parsing
 * v0.1.1 - 2015-02-13: Fixed how redirectStart and fetchStart are calculated
