@@ -44,7 +44,8 @@
         "link": 2,
         "script": 3,
         "css": 4,
-        "xmlhttprequest": 5
+        "xmlhttprequest": 5,
+        "html": 6
     };
 
     /**

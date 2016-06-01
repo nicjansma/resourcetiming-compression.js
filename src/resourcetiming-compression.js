@@ -44,7 +44,8 @@
         "link": 2,
         "script": 3,
         "css": 4,
-        "xmlhttprequest": 5
+        "xmlhttprequest": 5,
+        "html": 6
     };
 
     /**
@@ -255,6 +256,7 @@
                     // replace document with the actual URL
                     entries.push({
                         name: frame.location.href,
+                        initiatorType: "html",
                         startTime: 0,
                         redirectStart: navEntry.redirectStart,
                         redirectEnd: navEntry.redirectEnd,
@@ -273,6 +275,7 @@
                     t = frame.performance.timing;
                     entries.push({
                         name: frame.location.href,
+                        initiatorType: "html",
                         startTime: 0,
                         redirectStart: t.redirectStart ? (t.redirectStart - t.navigationStart) : 0,
                         redirectEnd: t.redirectEnd ? (t.redirectEnd - t.navigationStart) : 0,
