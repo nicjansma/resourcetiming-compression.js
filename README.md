@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v0.2.2
+v0.3.0
 
 [http://nicj.net](http://nicj.net)
 
@@ -32,13 +32,13 @@ NOTE: `resourcetiming-compression.js` is the same code that drives the `restimin
 
 Releases are available for download from [GitHub](https://github.com/nicjansma/resourcetiming-compression.js).
 
-__Development:__ [resourcetiming-compression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-compression.js) - 15kb
+__Development:__ [resourcetiming-compression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-compression.js) - 30kb
 
-__Production:__ [resourcetiming-compression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-compression.min.js) - 4.5kb (minified / gzipped)
+__Production:__ [resourcetiming-compression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-compression.min.js) - 2.4kb (minified / gzipped)
 
-__Development:__ [resourcetiming-decompression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-decompression.js) - 6.5kb
+__Development:__ [resourcetiming-decompression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-decompression.js) - 8.8kb
 
-__Production:__ [resourcetiming-decompression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-decompression.min.js) - 2kb (minified / gzipped)
+__Production:__ [resourcetiming-decompression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-decompression.min.js) - 1kb (minified / gzipped)
 
 resourcetiming-compression.js is also available as the [npm resourcetiming-compression module](https://npmjs.org/package/resourcetiming-compression). You can install
 using  Node Package Manager (npm):
@@ -95,6 +95,67 @@ To decompress your resources, you can simply call:
 var original = ResourceTimingDecompression.decompressResources(rtData);
 ```
 
+## Resource Dimensions
+
+If available, when [compressing the resources](http://nicj.net/compressing-resourcetiming/) via `compressResourceTiming()`, any resource that has a visible component on the page (such as an `IMG` element) will have its `height` `width` `top` and `left` values captured and included in the compressed data as well.
+
+This information is encoded as a "special value" in the resource's timings array.
+
+For each resource, multiple hits to the same URL are separated by a pipe (`|`) character:
+
+```
+{
+  // this resource was loaded twice with timings 70,1z,1c and 90,1,2
+  "http://blah.com/js/foo.js": "370,1z,1c|390,1,2"
+}
+```
+
+(See the [blog post](http://nicj.net/compressing-resourcetiming/) for a description of how to interpret the values)
+
+If the resource has visible elements on the page, they will be appended to this list of timings with a special prefix of `*0` ([Base36](https://en.wikipedia.org/wiki/Base36) encoded):
+
+```
+{
+  // this resource was loaded twice with timings 70,1z,1c and 90,1,2 and had
+  // dimensions of height = 1, width = 5, top = 10 and left = 11
+  "http://blah.com/js/foo.js": "370,1z,1c|390,1,2|*01,5,a,b"
+}
+```
+
+## Resource Sizes
+
+If available via [ResourceTiming2](https://www.w3.org/TR/resource-timing/), when [compressing the resources](http://nicj.net/compressing-resourcetiming/) via `compressResourceTiming()`, the resource's `transferSize`, `encodedBodySize` and `decodedBodySize` will be captured and included in the compressed data as well.
+
+This information is encoded as a "special value" in the resource's timings array.  They will be appended to the list of timings with a special prefix of `*1`:
+
+The data will be stored in the order of: `[e, t, d]`.
+
+* `e`: `encodedBodySize` is the [Base36](https://en.wikipedia.org/wiki/Base36) decoded value (`encodedBodySize = parseInt(e, 36)`)
+* `t`:
+    * If a Base36 encoded number, `t` is the `transferSize` increase in size over `encodedBodySize` (`transferSize = parseInt(e, 36) + parseInt(t, 36)`)
+    * If the value of `"_"`, `transferSize` is `0`
+    * If missing, `transferSize` was either `0` or `undefined`
+* `d`:
+    * If a Base36 encoded number, `d` is the `decodedBodySize` increase in size over `encodedBodySize` (`decodedBodySize = parseInt(e, 36) + parseInt(d, 36)`)
+    * If `0`, `encodedBodySize` is `0`
+    * If missing, `encodedBodySize` was either `0` or `undefined`
+
+Taking the following example:
+
+```
+{
+  // this resource was loaded twice with timings 70,1z,1c and 90,1,2 and had
+  // transferSize
+  "http://blah.com/js/foo.js": "370,1z,1c|390,1,2|*1a,b,c"
+}
+```
+
+Results in:
+
+* `encodedBodySize` = `parseInt("a", 36)` = `10`
+* `transferSize` = `parseInt("a", 36) + parseInt("b", 36)` = `21`
+* `encodedBodySize` = `parseInt("a", 36) + parseInt("c", 36)` = `22`
+
 ## Tests
 
 ### resourcetiming-compression.js tests
@@ -109,6 +170,13 @@ Or via ``gulp``:
 
 ## Version History
 
+* v0.3.0 - 2016-07-11:
+    * Captures dimensions (px) of resources
+    * Captures resource sizes (bytes) from ResourceTiming2
+    * Breaks certain URLs up slightly so they don't trigger XSS filters
+    * Limits URLs to 500 characters, and adds the ability to trim other URLs
+    * Don't go more than 10 IFRAMEs deep (to avoid recursion bugs)
+    * Fixes browser bugs with incorrect timings
 * v0.2.2 - 2016-06-01: Add 'html' initiatorType for root page
 * v0.2.1 - 2016-04-04: Protect against X-O frame access that crashes some browsers
 * v0.2.0 - 2015-11-23: Export both ResourceTimingCompression and ResourceTimingDecompression from main module

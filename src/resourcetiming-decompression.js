@@ -82,7 +82,13 @@
 
                 // end-node
                 for (var i = 0; i < timings.length; i++) {
-                    resources.push(this.decodeCompressedResource(timings[i], nodeKey));
+                    var resourceData = timings[i];
+                    if (resourceData.length > 0 && resourceData[0] === "*") {
+                      // dimensions for this resource
+                      continue;
+                    }
+
+                    resources.push(this.decodeCompressedResource(resourceData, nodeKey));
                 }
             } else {
                 // continue down
@@ -188,6 +194,61 @@
         }
 
         return 0;
+    };
+
+    /**
+     * Decompresses size information back into the specified resource
+     *
+     * @param {string} compressed Compressed string
+     * @param {ResourceTiming} resource ResourceTiming bject
+     * @returns {ResourceTiming} ResourceTiming object with decompressed sizes
+     */
+    ResourceTimingDecompression.decompressSize = function(compressed, resource) {
+        var split, i;
+
+        if (typeof resource === "undefined") {
+            resource = {};
+        }
+
+        split = compressed.split(",");
+
+        for (i = 0; i < split.length; i++) {
+            if (split[i] === "_") {
+                // special non-delta value
+                split[i] = 0;
+            } else {
+                // fill in missing numbers
+                if (split[i] === "") {
+                    split[i] = 0;
+                }
+
+                // convert back from Base36
+                split[i] = parseInt(split[i], 36);
+
+                if (i > 0) {
+                    // delta against first number
+                    split[i] += split[0];
+                }
+            }
+        }
+
+        // fill in missing
+        if (split.length === 1) {
+            // transferSize is a delta from encodedSize
+            split.push(split[0]);
+        }
+
+        if (split.length === 2) {
+            // decodedSize is a delta from encodedSize
+            split.push(split[0]);
+        }
+
+        // re-add attributes to the resource
+        resource.encodedBodySize = split[0];
+        resource.transferSize = split[1];
+        resource.decodedBodySize = split[2];
+
+        return resource;
     };
 
     //

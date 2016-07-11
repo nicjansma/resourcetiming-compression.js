@@ -1,4 +1,5 @@
 /* eslint-env node, mocha */
+/* eslint-disable max-len */
 (function(root) {
     "use strict";
 
@@ -126,6 +127,127 @@
                 var expected = [getTimestampsFor("ab"), getTimestampsFor("abc"), getTimestampsFor("abcd")];
 
                 expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
+            });
+        });
+
+        describe("decompressSize()", function() {
+            // X-O: [0, 0, 0] -> [0, 0, 0] -> [empty]
+            it("Should reverse cross-origin resources", function() {
+                expect({
+                    transferSize: 0,
+                    encodedBodySize: 0,
+                    decodedBodySize: 0
+                }).to.eql(ResourceTimingDecompression.decompressSize(""));
+            });
+
+            // 204: [t, 0, 0] -> [t, 0, 0] -> [e, t-e]
+            it("Should reverse [e, t-e, d-e] -> [0, t, 0] -> ',t,0' -> ',t' for 204 responses", function() {
+                expect({
+                    transferSize: 10,
+                    encodedBodySize: 0,
+                    decodedBodySize: 0
+                }).to.eql(ResourceTimingDecompression.decompressSize(",a"));
+            });
+
+            // 304: [t: t <=> e, e, d: d>=e] -> [e, t-e, d-e]
+            it("Should reverse [e, t-e, d-e] -> [e, dt, dd] -> 'e,dt,0' -> 'e,dt' for 304 responses (t > e, d = e)", function() {
+                expect({
+                    transferSize: 15,
+                    encodedBodySize: 10,
+                    decodedBodySize: 10
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,5"));
+            });
+
+            it("Should reverse [e, t-e, d-e] -> [e, dt, dd] -> 'e,-dt,0' -> 'e,-dt' for 304 responses (t < e, d = e)", function() {
+                expect({
+                    transferSize: 5,
+                    encodedBodySize: 10,
+                    decodedBodySize: 10
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,-5"));
+            });
+
+            it("Should reverse [e, t-e, d-e] -> [e, dt, dd] -> 'e,0,0' -> 'e' for 304 responses (t = e, d = e)", function() {
+                expect({
+                    transferSize: 10,
+                    encodedBodySize: 10,
+                    decodedBodySize: 10
+                }).to.eql(ResourceTimingDecompression.decompressSize("a"));
+            });
+
+            it("Should reverse [e, t-e, d-e] -> [e, dt, dd] -> 'e,dt,dd' for 304 responses (t > e, d > e)", function() {
+                expect({
+                    transferSize: 20,
+                    encodedBodySize: 10,
+                    decodedBodySize: 15
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,a,5"));
+            });
+
+            it("Should reverse [e, t-e, d-e] -> [e, dt, dd] -> 'e,-dt,dd' for 304 responses (t < e, d > e)", function() {
+                expect({
+                    transferSize: 5,
+                    encodedBodySize: 10,
+                    decodedBodySize: 15
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,-5,5"));
+            });
+
+            it("Should reverse [e, t-e, d-e] -> [e, dt, dd] -> 'e,0,dd' -> 'e,,dd' for 304 responses (t = e, d > e)", function() {
+                expect({
+                    transferSize: 10,
+                    encodedBodySize: 10,
+                    decodedBodySize: 15
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,,5"));
+            });
+
+            // 200 non-gzipped: [t: t>=e, e, d: d=e] -> [e, t-e]
+            it("Should reverse [e, t-e, d-e] -> [e, dt, 0] -> 'e,0' -> 'e' for 200 non-gzipped responses (t = e)", function() {
+                expect({
+                    transferSize: 10,
+                    encodedBodySize: 10,
+                    decodedBodySize: 10
+                }).to.eql(ResourceTimingDecompression.decompressSize("a"));
+            });
+
+            it("Should reverse [e, t-e, d-e] -> [e, dt, 0] -> 'e,dt' for 200 non-gzipped responses (t > e)", function() {
+                expect({
+                    transferSize: 15,
+                    encodedBodySize: 10,
+                    decodedBodySize: 10
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,5"));
+            });
+
+            // 200 gzipped: [t: t>=e, e, d: d>=e] -> [e, t-e, d-e]
+            it("Should reverse [e, t-e, d-e] -> [e, dt, 0] -> 'e,0,dd' -> 'e,,dd' for 200 gzipped responses (t = e, d > e)", function() {
+                expect({
+                    transferSize: 10,
+                    encodedBodySize: 10,
+                    decodedBodySize: 15
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,,5"));
+            });
+
+            it("Should reverse [e, t-e, d-e] -> [e, dt, 0] -> 'e,dt,dd' for 200 gzipped responses (t > e, d > e)", function() {
+                expect({
+                    transferSize: 15,
+                    encodedBodySize: 10,
+                    decodedBodySize: 20
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,5,a"));
+            });
+
+            // retrieved from cache non-gzipped: [0, e, d: d=e] -> [e]
+            it("Should reverse [e, t-e, d-e] -> [e, _, dd] -> 'e,_,0' -> 'e,_' for cached non-gzipped responses", function() {
+                expect({
+                    transferSize: 0,
+                    encodedBodySize: 10,
+                    decodedBodySize: 10
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,_"));
+            });
+
+            // retrieved from cache gzipped: [0, e, d: d>=e] -> [e, _, d-e]
+            it("Should reverse [e, t-e, d-e] -> [e, _, dd] -> 'e,_,dd' -> 'e,_,dd' for cached gzipped responses", function() {
+                expect({
+                    transferSize: 0,
+                    encodedBodySize: 10,
+                    decodedBodySize: 15
+                }).to.eql(ResourceTimingDecompression.decompressSize("a,_,5"));
             });
         });
     });
