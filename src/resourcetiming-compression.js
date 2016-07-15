@@ -412,7 +412,10 @@
                     connectEnd: t.connectEnd ? (t.connectEnd + offset) : 0,
                     requestStart: t.requestStart ? (t.requestStart + offset) : 0,
                     responseStart: t.responseStart ? (t.responseStart + offset) : 0,
-                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0
+                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0,
+                    encodedBodySize: t.encodedBodySize ? t.encodedBodySize : 0,
+                    decodedBodySize: t.decodedBodySize ? t.decodedBodySize : 0,
+                    transferSize: t.transferSize ? t.transferSize : 0
                 });
             }
 
