@@ -283,7 +283,7 @@
      * @returns {PerformanceEntry[]} Performance entries
      */
     ResourceTimingCompression.findPerformanceEntriesForFrame = function(frame, isTopWindow, offset, depth) {
-        var entries = [], i, navEntries, navStart, frameNavStart, frameOffset, navEntry, t, frameLoc;
+        var entries = [], i, navEntries, navStart, frameNavStart, frameOffset, navEntry, t, frameLoc, rtEntry;
 
         if (typeof isTopWindow === "undefined") {
             isTopWindow = true;
@@ -398,7 +398,7 @@
 
             for (i = 0; frameEntries && i < frameEntries.length; i++) {
                 t = frameEntries[i];
-                frameFixedEntries.push({
+                rtEntry = {
                     name: t.name,
                     initiatorType: t.initiatorType,
                     startTime: t.startTime + offset,
@@ -412,11 +412,14 @@
                     connectEnd: t.connectEnd ? (t.connectEnd + offset) : 0,
                     requestStart: t.requestStart ? (t.requestStart + offset) : 0,
                     responseStart: t.responseStart ? (t.responseStart + offset) : 0,
-                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0,
-                    encodedBodySize: t.encodedBodySize ? t.encodedBodySize : 0,
-                    decodedBodySize: t.decodedBodySize ? t.decodedBodySize : 0,
-                    transferSize: t.transferSize ? t.transferSize : 0
-                });
+                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0
+                };
+                if (t.encodedBodySize || t.decodedBodySize || t.transferSize) {
+                    rtEntry.encodedBodySize = t.encodedBodySize;
+                    rtEntry.decodedBodySize = t.decodedBodySize;
+                    rtEntry.transferSize = t.transferSize;
+                }
+                frameFixedEntries.push(rtEntry);
             }
 
             entries = entries.concat(frameFixedEntries);
