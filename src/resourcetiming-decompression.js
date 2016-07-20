@@ -48,6 +48,16 @@
         "html": 6
     };
 
+    // Any ResourceTiming data time that starts with this character is not a time,
+    // but something else (like dimension data)
+    var SPECIAL_DATA_PREFIX = "*";
+
+    // Dimension data special type
+    var SPECIAL_DATA_DIMENSION_TYPE = "0";
+
+    // Dimension data special type
+    var SPECIAL_DATA_SIZE_TYPE = "1";
+
     /**
      * Decompresses a compressed ResourceTiming trie
      *
@@ -83,7 +93,7 @@
                 // end-node
                 for (var i = 0; i < timings.length; i++) {
                     var resourceData = timings[i];
-                    if (resourceData.length > 0 && resourceData[0] === "*") {
+                    if (resourceData.length > 0 && resourceData[0] === SPECIAL_DATA_PREFIX) {
                       // dimensions for this resource
                       continue;
                     }
@@ -133,7 +143,9 @@
         }
 
         var initiatorType = parseInt(data[0], 10);
-        var timings = data.length > 1 ? data.substring(1).split(",") : [];
+        data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE) : [];
+        var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
+        var sizes = data.length > 1 ? data[1] : "";
 
         // convert all timings from base36
         for (var i = 0; i < timings.length; i++) {
@@ -173,6 +185,11 @@
         };
 
         res.duration = res.responseEnd > 0 ? (res.responseEnd - res.startTime) : 0;
+
+        // decompress resource size data
+        if (sizes.length > 0) {
+            this.decompressSize(sizes, res);
+        }
 
         return res;
     };
