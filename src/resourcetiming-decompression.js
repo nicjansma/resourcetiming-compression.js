@@ -52,7 +52,7 @@
     * Returns a map with key/value pairs reversed.
     *
     * @param {object} origMap Map we want to reverse.
-    * 
+    *
     * @returns {object} New map with reversed mappings.
     */
     ResourceTimingDecompression.getRevMap = function(origMap) {
@@ -63,12 +63,13 @@
             }
         }
         return revMap;
-    }
+    };
 
     /**
     * Reverse initiator type map
     */
-    ResourceTimingDecompression.REV_INITIATOR_TYPES = ResourceTimingDecompression.getRevMap(ResourceTimingDecompression.INITIATOR_TYPES);
+    ResourceTimingDecompression.REV_INITIATOR_TYPES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.INITIATOR_TYPES);
 
     // Any ResourceTiming data time that starts with this character is not a time,
     // but something else (like dimension data)
@@ -143,8 +144,7 @@
     ResourceTimingDecompression.getInitiatorTypeFromIndex = function(index) {
         if (this.REV_INITIATOR_TYPES.hasOwnProperty(index)) {
             return this.REV_INITIATOR_TYPES[index];
-        }
-        else {
+        } else {
             return "other";
         }
     };
