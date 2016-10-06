@@ -48,6 +48,28 @@
         "html": 6
     };
 
+    /**
+    * Returns a map with key/value pairs reversed.
+    *
+    * @param {object} origMap Map we want to reverse.
+    * 
+    * @returns {object} New map with reversed mappings.
+    */
+    ResourceTimingDecompression.getRevMap = function(origMap) {
+        var revMap = {};
+        for (var key in origMap) {
+            if (origMap.hasOwnProperty(key)) {
+                revMap[origMap[key]] = key;
+            }
+        }
+        return revMap;
+    }
+
+    /**
+    * Reverse initiator type map
+    */
+    ResourceTimingDecompression.REV_INITIATOR_TYPES = ResourceTimingDecompression.getRevMap(ResourceTimingDecompression.INITIATOR_TYPES);
+
     // Any ResourceTiming data time that starts with this character is not a time,
     // but something else (like dimension data)
     var SPECIAL_DATA_PREFIX = "*";
@@ -119,13 +141,12 @@
      * @returns {string} initiatorType, or "other" if not known
      */
     ResourceTimingDecompression.getInitiatorTypeFromIndex = function(index) {
-        for (var initiatorType in this.INITIATOR_TYPES) {
-            if (this.INITIATOR_TYPES[initiatorType] === index) {
-                return initiatorType;
-            }
+        if (this.REV_INITIATOR_TYPES.hasOwnProperty(index)) {
+            return this.REV_INITIATOR_TYPES[index];
         }
-
-        return "other";
+        else {
+            return "other";
+        }
     };
 
     /**
