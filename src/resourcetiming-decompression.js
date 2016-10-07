@@ -56,7 +56,7 @@
         "width": 1,
         "y": 2,
         "x": 3
-    }
+    };
 
     /**
     * Returns a map with key/value pairs reversed.
@@ -97,7 +97,6 @@
 
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
-
 
     /**
      * Decompresses a compressed ResourceTiming trie
@@ -156,7 +155,7 @@
                     resources.push(
                         this.addDimension(
                             this.decodeCompressedResource(resourceData, nodeKey),
-                            dimensionData;
+                            dimensionData
                         )
                     );
                 }
@@ -225,7 +224,7 @@
     */
     ResourceTimingDecompression.addDimension = function(resource, dimensionData) {
         // If the resource or data are not defined, do nothing.
-        if (!resource || ! dimensionData) {
+        if (!resource || !dimensionData) {
             return resource;
         }
 
