@@ -49,6 +49,16 @@
     };
 
     /**
+    * Dimension name map
+    */
+    ResourceTimingDecompression.DIMENSION_NAMES = {
+        "height": 0,
+        "width": 1,
+        "y": 2,
+        "x": 3
+    }
+
+    /**
     * Returns a map with key/value pairs reversed.
     *
     * @param {object} origMap Map we want to reverse.
@@ -71,15 +81,23 @@
     ResourceTimingDecompression.REV_INITIATOR_TYPES = ResourceTimingDecompression.
         getRevMap(ResourceTimingDecompression.INITIATOR_TYPES);
 
+    /**
+    * Reverse dimension name map
+    */
+    ResourceTimingDecompression.REV_DIMENSION_NAMES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.DIMENSION_NAMES);
+
     // Any ResourceTiming data time that starts with this character is not a time,
     // but something else (like dimension data)
     var SPECIAL_DATA_PREFIX = "*";
 
     // Dimension data special type
     var SPECIAL_DATA_DIMENSION_TYPE = "0";
+    var SPECIAL_DATA_DIMENSION_PREFIX = SPECIAL_DATA_PREFIX + SPECIAL_DATA_DIMENSION_TYPE;
 
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
+
 
     /**
      * Decompresses a compressed ResourceTiming trie
@@ -91,6 +109,9 @@
      */
     ResourceTimingDecompression.decompressResources = function(rt, prefix) {
         var resources = [];
+
+        // Dimension data for resources.
+        var dimensionData;
 
         prefix = prefix || "";
 
@@ -113,15 +134,31 @@
                 // add all occurences
                 var timings = node.split("|");
 
+                // Make sure we reset the dimensions before each new resource.
+                dimensionData = undefined;
+
+                if (timings.length > 0 && this.isDimensionData(timings[0])) {
+                    dimensionData = this.decompressDimension(timings[0]);
+
+                    // Remove the dimension data from our timings array
+                    timings = timings.splice(1);
+                }
+
                 // end-node
                 for (var i = 0; i < timings.length; i++) {
                     var resourceData = timings[i];
-                    if (resourceData.length > 0 && resourceData[0] === SPECIAL_DATA_PREFIX) {
+                    if (this.isDimensionData(resourceData)) {
                       // dimensions for this resource
                       continue;
                     }
 
-                    resources.push(this.decodeCompressedResource(resourceData, nodeKey));
+                    // Decode resource and add dimension data to it.
+                    resources.push(
+                        this.addDimension(
+                            this.decodeCompressedResource(resourceData, nodeKey),
+                            dimensionData;
+                        )
+                    );
                 }
             } else {
                 // continue down
@@ -132,6 +169,74 @@
       }
 
       return resources;
+    };
+
+    /*
+    * Checks that the input contains dimension information.
+    *
+    * @param {string} resourceData The string we want to check.
+    *
+    * @returns boolean True if resourceData starts with SPECIAL_DATA_DIMENSION_PREFIX, false otherwise.
+    */
+    ResourceTimingDecompression.isDimensionData = function(resourceData) {
+        return resourceData &&
+            resourceData.startsWith(SPECIAL_DATA_DIMENSION_PREFIX);
+    };
+
+    /**
+    * Extract height, width, y and x from a string.
+    *
+    * @param {string} resourceData A string containing dimension data.
+    *
+    * @returns {object} Dimension data with keys defined by DIMENSION_NAMES.
+    */
+    ResourceTimingDecompression.decompressDimension = function(resourceData) {
+        var dimensionData = {};
+
+        // If the string does not contain dimension information, do nothing.
+        if (!this.isDimensionData(resourceData)) {
+            return dimensionData;
+        }
+
+        // Remove special prefix
+        resourceData = resourceData.substring(SPECIAL_DATA_DIMENSION_PREFIX.length);
+
+        var dimensions = resourceData.split(",");
+
+        // Base 36 decode and assign to correct keys of dimensionData.
+        for (var i = 0; i < dimensions.length; i++) {
+            if (dimensions[i] === "") {
+                dimensionData[this.REV_DIMENSION_NAMES[i]] = 0;
+            } else {
+                dimensionData[this.REV_DIMENSION_NAMES[i]] = parseInt(dimensions[i], 36);
+            }
+        }
+
+        return dimensionData;
+    };
+
+    /**
+    * Adds dimension data to the given resource.
+    *
+    * @param {object} resource The resource we want to edit.
+    * @param {object} dimensionData The dimension data we want to add.
+    *
+    * @returns {object} The resource with added dimensions.
+    */
+    ResourceTimingDecompression.addDimension = function(resource, dimensionData) {
+        // If the resource or data are not defined, do nothing.
+        if (!resource || ! dimensionData) {
+            return resource;
+        }
+
+        // Add all the defined dimensions to our resource.
+        for (var key in dimensionData) {
+            if (dimensionData.hasOwnProperty(key)) {
+                resource[key] = dimensionData[key];
+            }
+        }
+
+        return resource;
     };
 
     /**
