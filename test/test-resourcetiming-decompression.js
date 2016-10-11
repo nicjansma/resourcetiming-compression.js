@@ -250,5 +250,44 @@
                 }).to.eql(ResourceTimingDecompression.decompressSize("a,_,5"));
             });
         });
+
+        describe("decompressDimension()", function() {
+            it("Should return an empty object because of the lack of prefix.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressDimension("a,b,c,d"));
+            });
+
+            it("Should return an empty object because of the lack of data.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressDimension("*0"));
+            });
+
+            it("Should return an empty object because only one dimension exists.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressDimension("*01"));
+            });
+
+            it("Should a height, width of 1.", function() {
+                expect({
+                    height: 1,
+                    width: 1
+                }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1"));
+            });
+
+            it("Should find a height, width, y, x of 1.", function() {
+                expect({
+                    height: 1,
+                    width: 1,
+                    y: 1,
+                    x: 1
+                }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1,1,1"));
+            });
+
+            it("Should find a height, width, x of 1 and y of 0.", function() {
+                expect({
+                    height: 1,
+                    width: 1,
+                    y: 0,
+                    x: 1
+                }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1,,1"));
+            });
+        });
     });
 }(typeof window !== "undefined" ? window : undefined));

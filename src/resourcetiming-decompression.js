@@ -190,6 +190,7 @@
     * @returns {object} Dimension data with keys defined by DIMENSION_NAMES.
     */
     ResourceTimingDecompression.decompressDimension = function(resourceData) {
+        var dimensions, i;
         var dimensionData = {};
 
         // If the string does not contain dimension information, do nothing.
@@ -200,10 +201,15 @@
         // Remove special prefix
         resourceData = resourceData.substring(SPECIAL_DATA_DIMENSION_PREFIX.length);
 
-        var dimensions = resourceData.split(",");
+        dimensions = resourceData.split(",");
+
+        // The data should contain at least heigh/width.
+        if (dimensions.length < 2) {
+            return dimensionData;
+        }
 
         // Base 36 decode and assign to correct keys of dimensionData.
-        for (var i = 0; i < dimensions.length; i++) {
+        for (i = 0; i < dimensions.length; i++) {
             if (dimensions[i] === "") {
                 dimensionData[this.REV_DIMENSION_NAMES[i]] = 0;
             } else {
