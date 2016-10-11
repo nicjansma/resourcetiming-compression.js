@@ -179,7 +179,7 @@
     */
     ResourceTimingDecompression.isDimensionData = function(resourceData) {
         return resourceData &&
-            resourceData.startsWith(SPECIAL_DATA_DIMENSION_PREFIX);
+            resourceData.substring(0, SPECIAL_DATA_DIMENSION_PREFIX.length) === SPECIAL_DATA_DIMENSION_PREFIX;
     };
 
     /**
