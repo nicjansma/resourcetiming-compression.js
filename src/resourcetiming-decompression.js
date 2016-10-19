@@ -146,10 +146,6 @@
                 // end-node
                 for (var i = 0; i < timings.length; i++) {
                     var resourceData = timings[i];
-                    if (this.isDimensionData(resourceData)) {
-                      // dimensions for this resource
-                      continue;
-                    }
 
                     // Decode resource and add dimension data to it.
                     resources.push(
@@ -203,7 +199,7 @@
 
         dimensions = resourceData.split(",");
 
-        // The data should contain at least heigh/width.
+        // The data should contain at least height/width.
         if (dimensions.length < 2) {
             return dimensionData;
         }
