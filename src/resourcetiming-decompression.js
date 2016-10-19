@@ -230,9 +230,10 @@
             return resource;
         }
 
-        // Add all the defined dimensions to our resource.
-        for (var key in dimensionData) {
-            if (dimensionData.hasOwnProperty(key)) {
+        // Add all the dimensions to our resource.
+        for (var key in ResourceTimingDecompression.DIMENSION_NAMES) {
+            if (ResourceTimingDecompression.DIMENSION_NAMES.hasOwnProperty(key) &&
+                dimensionData.hasOwnProperty(key)) {
                 resource[key] = dimensionData[key];
             }
         }
