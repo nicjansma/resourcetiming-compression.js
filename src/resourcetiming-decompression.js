@@ -231,8 +231,8 @@
         }
 
         // Add all the dimensions to our resource.
-        for (var key in ResourceTimingDecompression.DIMENSION_NAMES) {
-            if (ResourceTimingDecompression.DIMENSION_NAMES.hasOwnProperty(key) &&
+        for (var key in this.DIMENSION_NAMES) {
+            if (this.DIMENSION_NAMES.hasOwnProperty(key) &&
                 dimensionData.hasOwnProperty(key)) {
                 resource[key] = dimensionData[key];
             }
