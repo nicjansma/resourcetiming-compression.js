@@ -293,7 +293,7 @@
         describe("addDimension()", function() {
             it("Should return an empty object, because there is no dimension data.", function() {
                 expect(
-                {} 
+                {}
                 ).to.eql(ResourceTimingDecompression.addDimension({}, {}));
             });
 
@@ -309,7 +309,7 @@
                     width: 1,
                     y: 0,
                     x: 1
-                }).to.eql(ResourceTimingDecompression.addDimension({},{
+                }).to.eql(ResourceTimingDecompression.addDimension({}, {
                     height: 1,
                     width: 1,
                     y: 0,
@@ -323,7 +323,7 @@
                     width: 1,
                     y: 0,
                     x: 1
-                }).to.eql(ResourceTimingDecompression.addDimension({},{
+                }).to.eql(ResourceTimingDecompression.addDimension({}, {
                     height: 1,
                     width: 1,
                     y: 0,
@@ -331,8 +331,6 @@
                     notdimension: 1
                 }));
             });
-
-
         });
     });
 }(typeof window !== "undefined" ? window : undefined));
