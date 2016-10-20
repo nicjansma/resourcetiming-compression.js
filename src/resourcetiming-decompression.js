@@ -45,7 +45,9 @@
         "script": 3,
         "css": 4,
         "xmlhttprequest": 5,
-        "html": 6
+        "html": 6,
+        // IMAGE element inside a SVG
+        "image": 7
     };
 
     /**
