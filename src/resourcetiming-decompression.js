@@ -48,12 +48,52 @@
         "html": 6
     };
 
+    /**
+    * Dimension name map
+    */
+    ResourceTimingDecompression.DIMENSION_NAMES = {
+        "height": 0,
+        "width": 1,
+        "y": 2,
+        "x": 3
+    };
+
+    /**
+    * Returns a map with key/value pairs reversed.
+    *
+    * @param {object} origMap Map we want to reverse.
+    *
+    * @returns {object} New map with reversed mappings.
+    */
+    ResourceTimingDecompression.getRevMap = function(origMap) {
+        var revMap = {};
+        for (var key in origMap) {
+            if (origMap.hasOwnProperty(key)) {
+                revMap[origMap[key]] = key;
+            }
+        }
+        return revMap;
+    };
+
+    /**
+    * Reverse initiator type map
+    */
+    ResourceTimingDecompression.REV_INITIATOR_TYPES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.INITIATOR_TYPES);
+
+    /**
+    * Reverse dimension name map
+    */
+    ResourceTimingDecompression.REV_DIMENSION_NAMES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.DIMENSION_NAMES);
+
     // Any ResourceTiming data time that starts with this character is not a time,
     // but something else (like dimension data)
     var SPECIAL_DATA_PREFIX = "*";
 
     // Dimension data special type
     var SPECIAL_DATA_DIMENSION_TYPE = "0";
+    var SPECIAL_DATA_DIMENSION_PREFIX = SPECIAL_DATA_PREFIX + SPECIAL_DATA_DIMENSION_TYPE;
 
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
@@ -68,6 +108,9 @@
      */
     ResourceTimingDecompression.decompressResources = function(rt, prefix) {
         var resources = [];
+
+        // Dimension data for resources.
+        var dimensionData;
 
         prefix = prefix || "";
 
@@ -90,15 +133,27 @@
                 // add all occurences
                 var timings = node.split("|");
 
+                // Make sure we reset the dimensions before each new resource.
+                dimensionData = undefined;
+
+                if (timings.length > 0 && this.isDimensionData(timings[0])) {
+                    dimensionData = this.decompressDimension(timings[0]);
+
+                    // Remove the dimension data from our timings array
+                    timings = timings.splice(1);
+                }
+
                 // end-node
                 for (var i = 0; i < timings.length; i++) {
                     var resourceData = timings[i];
-                    if (resourceData.length > 0 && resourceData[0] === SPECIAL_DATA_PREFIX) {
-                      // dimensions for this resource
-                      continue;
-                    }
 
-                    resources.push(this.decodeCompressedResource(resourceData, nodeKey));
+                    // Decode resource and add dimension data to it.
+                    resources.push(
+                        this.addDimension(
+                            this.decodeCompressedResource(resourceData, nodeKey),
+                            dimensionData
+                        )
+                    );
                 }
             } else {
                 // continue down
@@ -111,6 +166,81 @@
       return resources;
     };
 
+    /*
+    * Checks that the input contains dimension information.
+    *
+    * @param {string} resourceData The string we want to check.
+    *
+    * @returns boolean True if resourceData starts with SPECIAL_DATA_DIMENSION_PREFIX, false otherwise.
+    */
+    ResourceTimingDecompression.isDimensionData = function(resourceData) {
+        return resourceData &&
+            resourceData.substring(0, SPECIAL_DATA_DIMENSION_PREFIX.length) === SPECIAL_DATA_DIMENSION_PREFIX;
+    };
+
+    /**
+    * Extract height, width, y and x from a string.
+    *
+    * @param {string} resourceData A string containing dimension data.
+    *
+    * @returns {object} Dimension data with keys defined by DIMENSION_NAMES.
+    */
+    ResourceTimingDecompression.decompressDimension = function(resourceData) {
+        var dimensions, i;
+        var dimensionData = {};
+
+        // If the string does not contain dimension information, do nothing.
+        if (!this.isDimensionData(resourceData)) {
+            return dimensionData;
+        }
+
+        // Remove special prefix
+        resourceData = resourceData.substring(SPECIAL_DATA_DIMENSION_PREFIX.length);
+
+        dimensions = resourceData.split(",");
+
+        // The data should contain at least height/width.
+        if (dimensions.length < 2) {
+            return dimensionData;
+        }
+
+        // Base 36 decode and assign to correct keys of dimensionData.
+        for (i = 0; i < dimensions.length; i++) {
+            if (dimensions[i] === "") {
+                dimensionData[this.REV_DIMENSION_NAMES[i]] = 0;
+            } else {
+                dimensionData[this.REV_DIMENSION_NAMES[i]] = parseInt(dimensions[i], 36);
+            }
+        }
+
+        return dimensionData;
+    };
+
+    /**
+    * Adds dimension data to the given resource.
+    *
+    * @param {object} resource The resource we want to edit.
+    * @param {object} dimensionData The dimension data we want to add.
+    *
+    * @returns {object} The resource with added dimensions.
+    */
+    ResourceTimingDecompression.addDimension = function(resource, dimensionData) {
+        // If the resource or data are not defined, do nothing.
+        if (!resource || !dimensionData) {
+            return resource;
+        }
+
+        // Add all the dimensions to our resource.
+        for (var key in this.DIMENSION_NAMES) {
+            if (this.DIMENSION_NAMES.hasOwnProperty(key) &&
+                dimensionData.hasOwnProperty(key)) {
+                resource[key] = dimensionData[key];
+            }
+        }
+
+        return resource;
+    };
+
     /**
      * Determines the initiatorType from a lookup
      *
@@ -119,13 +249,11 @@
      * @returns {string} initiatorType, or "other" if not known
      */
     ResourceTimingDecompression.getInitiatorTypeFromIndex = function(index) {
-        for (var initiatorType in this.INITIATOR_TYPES) {
-            if (this.INITIATOR_TYPES[initiatorType] === index) {
-                return initiatorType;
-            }
+        if (this.REV_INITIATOR_TYPES.hasOwnProperty(index)) {
+            return this.REV_INITIATOR_TYPES[index];
+        } else {
+            return "other";
         }
-
-        return "other";
     };
 
     /**

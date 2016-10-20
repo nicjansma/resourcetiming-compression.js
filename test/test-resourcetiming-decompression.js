@@ -250,5 +250,89 @@
                 }).to.eql(ResourceTimingDecompression.decompressSize("a,_,5"));
             });
         });
+
+        describe("decompressDimension()", function() {
+            it("Should return an empty object because of the lack of prefix.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressDimension("a,b,c,d"));
+            });
+
+            it("Should return an empty object because of the lack of data.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressDimension("*0"));
+            });
+
+            it("Should return an empty object because only one dimension exists.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressDimension("*01"));
+            });
+
+            it("Should a height, width of 1.", function() {
+                expect({
+                    height: 1,
+                    width: 1
+                }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1"));
+            });
+
+            it("Should find a height, width, y, x of 1.", function() {
+                expect({
+                    height: 1,
+                    width: 1,
+                    y: 1,
+                    x: 1
+                }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1,1,1"));
+            });
+
+            it("Should find a height, width, x of 1 and y of 0.", function() {
+                expect({
+                    height: 1,
+                    width: 1,
+                    y: 0,
+                    x: 1
+                }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1,,1"));
+            });
+        });
+
+        describe("addDimension()", function() {
+            it("Should return an empty object, because there is no dimension data.", function() {
+                expect(
+                {} 
+                ).to.eql(ResourceTimingDecompression.addDimension({}, {}));
+            });
+
+            it("Should not modify the resource because dimensionData is undefined.", function() {
+                expect({
+                    a: 1
+                }).to.eql(ResourceTimingDecompression.addDimension({a: 1}, undefined));
+            });
+
+            it("Should add all dimension data to the resource.", function() {
+                expect({
+                    height: 1,
+                    width: 1,
+                    y: 0,
+                    x: 1
+                }).to.eql(ResourceTimingDecompression.addDimension({},{
+                    height: 1,
+                    width: 1,
+                    y: 0,
+                    x: 1
+                }));
+            });
+
+            it("Should add all dimension data and no other to the resource.", function() {
+                expect({
+                    height: 1,
+                    width: 1,
+                    y: 0,
+                    x: 1
+                }).to.eql(ResourceTimingDecompression.addDimension({},{
+                    height: 1,
+                    width: 1,
+                    y: 0,
+                    x: 1,
+                    notdimension: 1
+                }));
+            });
+
+
+        });
     });
 }(typeof window !== "undefined" ? window : undefined));
