@@ -147,6 +147,11 @@
                 for (var i = 0; i < timings.length; i++) {
                     var resourceData = timings[i];
 
+                    if (resourceData.length > 0 && resourceData[0] === SPECIAL_DATA_PREFIX) {
+                        // dimensions or sizes for this resource
+                        continue;
+                    }
+
                     // Decode resource and add dimension data to it.
                     resources.push(
                         this.addDimension(
