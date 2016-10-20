@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v0.3.1
+v0.3.2
 
 [http://nicj.net](http://nicj.net)
 
@@ -170,6 +170,7 @@ Or via ``gulp``:
 
 ## Version History
 
+* v0.3.2 - 2016-10-20: Decodes resource dimensions
 * v0.3.1 - 2016-07-15: Fixed capturing of resource sizes (bytes)
 * v0.3.0 - 2016-07-11:
     * Captures dimensions (px) of resources
