@@ -460,7 +460,9 @@
      * @returns {Object} Object with URLs of visible assets as keys, and Array[height, width, top, left] as value
      */
     ResourceTimingCompression.getVisibleEntries = function(win) {
-        var els = ["IMG", "IFRAME", "IMAGE"], entries = {}, x, y, doc = win.document;
+        // lower-case tag names should be used:
+        // https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagName
+        var els = ["img", "iframe", "image"], entries = {}, x, y, doc = win.document, a = doc.createElement("A");
 
         // https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollX
         // https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
@@ -483,7 +485,11 @@
                 if (el) {
                     // src = IMG, IFRAME
                     // xlink:href = svg:IMAGE
-                    src = el.getAttribute("src") || el.getAttribute("xlink:href");
+                    src = el.src || el.getAttribute("src") || el.getAttribute("xlink:href");
+
+                    // change src to be relative
+                    a.href = src;
+                    src = a.href;
 
                     if (src && !entries[src]) {
                         rect = el.getBoundingClientRect();
@@ -493,8 +499,8 @@
                         if ((rect.height || el.offsetHeight)
                             && (rect.width || el.offsetWidth)) {
                             entries[src] = [
-                                el.offsetHeight,
-                                el.offsetWidth,
+                                (rect.height || el.offsetHeight),
+                                (rect.width || el.offsetWidth),
                                 Math.round(rect.top + y),
                                 Math.round(rect.left + x),
                             ];

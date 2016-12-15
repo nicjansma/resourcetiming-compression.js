@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v0.3.3
+v0.3.4
 
 [http://nicj.net](http://nicj.net)
 
@@ -170,6 +170,9 @@ Or via ``gulp``:
 
 ## Version History
 
+* v0.3.4 - 2016-10-20:
+    * Better `src` attribute capture and HREF handling
+    * Look at `rect.height|width` for dimensions
 * v0.3.3 - 2016-10-20: Handle SVG:image elements
 * v0.3.2 - 2016-10-20: Decodes resource dimensions
 * v0.3.1 - 2016-07-15: Fixed capturing of resource sizes (bytes)
