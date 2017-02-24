@@ -154,7 +154,7 @@ Results in:
 
 * `encodedBodySize` = `parseInt("a", 36)` = `10`
 * `transferSize` = `parseInt("a", 36) + parseInt("b", 36)` = `21`
-* `encodedBodySize` = `parseInt("a", 36) + parseInt("c", 36)` = `22`
+* `decodedBodySize` = `parseInt("a", 36) + parseInt("c", 36)` = `22`
 
 ## Tests
 
