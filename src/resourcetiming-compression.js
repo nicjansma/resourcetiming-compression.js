@@ -315,7 +315,7 @@
                         frameOffset = offset + (frameNavStart - navStart);
                     }
 
-                    entries = entries.concat(this.findPerformanceEntriesForFrame(frame.frames[i], false, frameOffset));
+                    entries = entries.concat(this.findPerformanceEntriesForFrame(frame.frames[i], false, frameOffset, ++depth));
                 }
             }
 
@@ -546,7 +546,7 @@
      * @returns {ResourceTiming[]} Matching ResourceTiming entries
      */
     ResourceTimingCompression.getFilteredResourceTiming = function(win, from, to, initiatorTypes) {
-        var entries = this.findPerformanceEntriesForFrame(win, true, 0, 0),
+        var entries = this.findPerformanceEntriesForFrame(win, true, 0),
             i, e, results = {}, initiatorType, url, data,
             navStart = this.getNavStartTime(win);
 
