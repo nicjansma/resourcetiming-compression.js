@@ -315,7 +315,8 @@
                         frameOffset = offset + (frameNavStart - navStart);
                     }
 
-                    entries = entries.concat(this.findPerformanceEntriesForFrame(frame.frames[i], false, frameOffset));
+                    entries = entries.concat(
+                        this.findPerformanceEntriesForFrame(frame.frames[i], false, frameOffset, ++depth));
                 }
             }
 
