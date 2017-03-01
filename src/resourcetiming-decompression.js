@@ -277,6 +277,7 @@
             return {};
         }
 
+        url = ResourceTimingDecompression.reverseHostname(url);
         var initiatorType = parseInt(data[0], 10);
         data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
@@ -401,6 +402,23 @@
         resource.decodedBodySize = split[2];
 
         return resource;
+    };
+
+    // eslint-disable-next-line max-len
+    ResourceTimingDecompression.HOSTNAME_REGEX = /^(?:(?:(([^:\/#\?]+:)?(?:(?:\/\/)(?:(?:(?:([^:@\/#\?]+)(?:\:([^:@\/#\?]*))?)@)?(([^:\/#\?\]\[]+|\[[^\/\]@#?]+\])(?:\:([0-9]+))?))?)?)?((?:\/?(?:[^\/\?#]+\/+)*)(?:[^\?#]*)))?(\?[^#]+)?)(#.*)?/;
+    ResourceTimingDecompression.reverseHostname = function(url) {
+        var hostname = (ResourceTimingDecompression.HOSTNAME_REGEX.exec(url) || [])[5];
+        return typeof hostname === "string"
+            ? url.split(hostname).join(ResourceTimingDecompression.reverseString(hostname))
+            : url;
+    };
+
+    ResourceTimingDecompression.reverseString = function(i) {
+        var l = i.length, o = "";
+        while (l--) {
+            o += i[l];
+        }
+        return o;
     };
 
     //

@@ -777,6 +777,7 @@
             }
 
             url = this.trimUrl(e.name, this.trimUrls);
+            url = this.reverseHostname(url);
 
             // if this entry already exists, add a pipe as a separator
             if (results[url] !== undefined) {
@@ -801,6 +802,23 @@
         }
 
         return this.optimizeTrie(this.convertToTrie(results), true);
+    };
+
+    // eslint-disable-next-line max-len
+    ResourceTimingCompression.HOSTNAME_REGEX = /^(?:(?:(([^:\/#\?]+:)?(?:(?:\/\/)(?:(?:(?:([^:@\/#\?]+)(?:\:([^:@\/#\?]*))?)@)?(([^:\/#\?\]\[]+|\[[^\/\]@#?]+\])(?:\:([0-9]+))?))?)?)?((?:\/?(?:[^\/\?#]+\/+)*)(?:[^\?#]*)))?(\?[^#]+)?)(#.*)?/;
+    ResourceTimingCompression.reverseHostname = function(url) {
+        var hostname = (ResourceTimingCompression.HOSTNAME_REGEX.exec(url) || [])[5];
+        return typeof hostname === "string"
+            ? url.split(hostname).join(ResourceTimingCompression.reverseString(hostname))
+            : url;
+    };
+
+    ResourceTimingCompression.reverseString = function(i) {
+        var l = i.length, o = "";
+        while (l--) {
+            o += i[l];
+        }
+        return o;
     };
 
     //
