@@ -91,7 +91,7 @@
         "space-before-blocks": 1,
         "space-in-parens": 1,
         "spaced-comment": 1,
-        "max-len": [1, 120, 4],
+        "max-len": [1, 130, 4],
         "array-callback-return": 2,
         "no-confusing-arrow": 2,
         "no-empty-function": 2,
