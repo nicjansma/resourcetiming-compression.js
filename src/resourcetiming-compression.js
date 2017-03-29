@@ -74,6 +74,9 @@
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
 
+    // Regular Expression to parse a URL
+    var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
+
     /**
      * List of URLs (strings or regexs) to trim
      */
@@ -315,7 +318,8 @@
                         frameOffset = offset + (frameNavStart - navStart);
                     }
 
-                    entries = entries.concat(this.findPerformanceEntriesForFrame(frame.frames[i], false, frameOffset));
+                    entries = entries.concat(
+                        this.findPerformanceEntriesForFrame(frame.frames[i], false, frameOffset, ++depth));
                 }
             }
 
@@ -777,6 +781,7 @@
             }
 
             url = this.trimUrl(e.name, this.trimUrls);
+            url = this.reverseHostname(url);
 
             // if this entry already exists, add a pipe as a separator
             if (results[url] !== undefined) {
@@ -801,6 +806,34 @@
         }
 
         return this.optimizeTrie(this.convertToTrie(results), true);
+    };
+
+    /**
+     * Reverse the hostname portion of a URL
+     *
+     * @param {string} url a fully-qualified URL
+     * @returns {string} the input URL with the hostname portion reversed, if it can be found
+     */
+    ResourceTimingCompression.reverseHostname = function(url) {
+        return url.replace(HOSTNAME_REGEX, function(m, p1, p2, p3) {
+            // p2 is everything after the first `://` and before the next `/`
+            // which includes `<username>:<password>@` and `:<port-number>`, if present
+            return p1 + ResourceTimingCompression.reverseString(p2) + p3;
+        });
+    };
+
+    /**
+     * Reverse a string
+     *
+     * @param {string} i a string
+     * @returns {string} the reversed string
+     */
+    ResourceTimingCompression.reverseString = function(i) {
+        var l = i.length, o = "";
+        while (l--) {
+            o += i[l];
+        }
+        return o;
     };
 
     //

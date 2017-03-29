@@ -100,6 +100,9 @@
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
 
+    // Regular Expression to parse a URL
+    var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
+
     /**
      * Decompresses a compressed ResourceTiming trie
      *
@@ -277,6 +280,7 @@
             return {};
         }
 
+        url = ResourceTimingDecompression.reverseHostname(url);
         var initiatorType = parseInt(data[0], 10);
         data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
@@ -401,6 +405,34 @@
         resource.decodedBodySize = split[2];
 
         return resource;
+    };
+
+    /**
+     * Reverse the hostname portion of a URL
+     *
+     * @param {string} url a fully-qualified URL
+     * @returns {string} the input URL with the hostname portion reversed, if it can be found
+     */
+    ResourceTimingDecompression.reverseHostname = function(url) {
+        return url.replace(HOSTNAME_REGEX, function(m, p1, p2, p3) {
+            // p2 is everything after the first `://` and before the next `/`
+            // which includes `<username>:<password>@` and `:<port-number>`, if present
+            return p1 + ResourceTimingDecompression.reverseString(p2) + p3;
+        });
+    };
+
+    /**
+     * Reverse a string
+     *
+     * @param {string} i a string
+     * @returns {string} the reversed string
+     */
+    ResourceTimingDecompression.reverseString = function(i) {
+        var l = i.length, o = "";
+        while (l--) {
+            o += i[l];
+        }
+        return o;
     };
 
     //

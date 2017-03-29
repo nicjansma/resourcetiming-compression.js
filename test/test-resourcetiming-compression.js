@@ -292,5 +292,57 @@
                 })).to.eql("a,_,5");
             });
         });
+
+        describe("reverseString()", function() {
+            it("Should reverse empty string", function() {
+                expect(ResourceTimingCompression.reverseString("")).to.eql("");
+            });
+            it("Should reverse a single character string", function() {
+                expect(ResourceTimingCompression.reverseString("a")).to.eql("a");
+            });
+            it("Should reverse a string", function() {
+                expect(ResourceTimingCompression.reverseString("abc")).to.eql("cba");
+            });
+        });
+
+        describe("reverseHostname()", function() {
+            it("Should reverse the hostname portion of `http://domain.com`", function() {
+                expect(ResourceTimingCompression.reverseHostname("http://domain.com")).to.eql("http://moc.niamod");
+            });
+            it("Should reverse the hostname portion of `https://domain.com`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://domain.com")).to.eql("https://moc.niamod");
+            });
+            it("Should reverse the hostname portion of `https://www.domain.com`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://www.domain.com")).to.eql("https://moc.niamod.www");
+            });
+            it("Should reverse the hostname portion of `https://cdn.domain.com`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://cdn.domain.com")).to.eql("https://moc.niamod.ndc");
+            });
+            it("Should reverse the hostname portion of `https://cdn.domain.com:8080`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://cdn.domain.com:8080")).to.eql("https://0808:moc.niamod.ndc");
+            });
+            it("Should reverse the hostname portion of `https://cdn.stuff.domain.com`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://cdn.stuff.domain.com")).to.eql("https://moc.niamod.ffuts.ndc");
+            });
+            it("Should reverse the hostname portion of `https://cdn.domain.com/?foo=bar`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://cdn.domain.com/?foo=bar")).to.eql("https://moc.niamod.ndc/?foo=bar");
+            });
+            it("Should reverse the hostname portion of `https://cdn.domain.com/#hash_value`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://cdn.domain.com/#hash_value")).to.eql("https://moc.niamod.ndc/#hash_value");
+            });
+            it("Should reverse the hostname portion of `https://username:password@cdn.domain.com`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://username:password@cdn.domain.com")).to.eql("https://moc.niamod.ndc@drowssap:emanresu");
+            });
+            it("Should reverse the hostname portion of `http://cdn.domain.com/path/to/image/?foo=bar`", function() {
+                expect(ResourceTimingCompression.reverseHostname("http://cdn.domain.com/path/to/image/?foo=bar")).to.eql("http://moc.niamod.ndc/path/to/image/?foo=bar");
+            });
+            it("Should reverse the hostname portion of `https://username:password@cdn.domain.com:8080/?foo=bar&baz=qux#hash_value`", function() {
+                expect(ResourceTimingCompression.reverseHostname("https://username:password@cdn.domain.com:8080/?foo=bar&baz=qux#hash_value")).to.eql("https://0808:moc.niamod.ndc@drowssap:emanresu/?foo=bar&baz=qux#hash_value");
+            });
+            it("Should only reverse only the first instance of the hostname portion", function() {
+                expect(ResourceTimingCompression.reverseHostname("http://domain.com/?foo=domain.com")).to.eql("http://moc.niamod/?foo=domain.com");
+            });
+        });
+
     });
 }(typeof window !== "undefined" ? window : undefined));
