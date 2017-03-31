@@ -332,5 +332,56 @@
                 }));
             });
         });
+
+        describe("searchSortedLast()", function() {
+            it("Should return -1, because x is <= all the values.", function() {
+                expect(
+                    -1
+                ).to.eql(ResourceTimingDecompression.searchSortedLast([1, 2, 3], 0));
+            });
+
+            it("Should return 2, because x is > all the values.", function() {
+                expect(
+                    2
+                ).to.eql(ResourceTimingDecompression.searchSortedLast([1, 2, 3], 4));
+            });
+        });
+
+        describe("searchSortedFirst()", function() {
+            it("Should return 0, because x is <= all the values.", function() {
+                expect(
+                    0
+                ).to.eql(ResourceTimingDecompression.searchSortedFirst([1, 2, 3], 0));
+            });
+
+            it("Should return 3, because x is > all the values.", function() {
+                expect(
+                    3
+                ).to.eql(ResourceTimingDecompression.searchSortedFirst([1, 2, 3], 4));
+            });
+        });
+
+        describe("addContribution()", function() {
+            it("Should add contribution scores to the resources.", function() {
+                expect([
+                    { startTime: 0, responseEnd: 320, contribution: 0.609375 },
+                    { startTime: 100, responseEnd: 260, contribution: 0.203125 },
+                    { startTime: 170, responseEnd: 320, contribution: 0.1875 }
+                ]).to.eql(ResourceTimingDecompression.addContribution([
+                    {
+                        startTime: 0,
+                        responseEnd: 320
+                    },
+                    {
+                        startTime: 100,
+                        responseEnd: 260
+                    },
+                    {
+                        startTime: 170,
+                        responseEnd: 320
+                    }
+                ]));
+            });
+        });
     });
 }(typeof window !== "undefined" ? window : undefined));
