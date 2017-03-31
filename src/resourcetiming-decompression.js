@@ -448,7 +448,7 @@
      * Adds contribution scores to all resources in the array.
      *
      * @param{array} rts array of resource timings.
-     * 
+     *
      * @returns {array} Array of resource timings with their contributions.
      */
     ResourceTimingDecompression.addContribution = function(rts) {
