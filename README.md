@@ -159,7 +159,6 @@ Results in:
 ## Resource Contributions
 
 We call contribution of a resource to a page the proportion of the total load time that can be blamed on that resource.
-
 We want contribution scores to encourage parallelization and not only short resources.
 
 It enables us to study resource impact in a more meaningful way over simply looking at raw load times.
@@ -175,7 +174,6 @@ B                      |----------------------|
 ```
 
 The contribution of resource A is 50ms for the 0-50ms time range and 50ms/2 for the 50ms to 100ms time range because
-
 it overlaps with B. We get:
 
 `contribution_A = (50 + 50 / 2) / 100 = .75`
@@ -183,7 +181,6 @@ it overlaps with B. We get:
 `contribution_B = (50 / 2) / 100 = .25`
 
 This is computed based on all the resources in a single beacon. It is not done by default because it is computationally
-
 expensive.
 
 Here is a code example to add contributions to your own resources:
