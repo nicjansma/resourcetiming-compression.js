@@ -166,11 +166,13 @@ It enables us to study resource impact in a more meaningful way over simply look
 
 Here is an example with only 2 resources to get some intuition into how it works:
 
+```
     0                                        100ms
 A   |-----------------------------------------|
 
                       50ms                   100ms
 B                      |----------------------|
+```
 
 The contribution of resource A is 50ms for the 0-50ms time range and 50ms/2 for the 50ms to 100ms time range because
 
