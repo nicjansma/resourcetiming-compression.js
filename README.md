@@ -178,9 +178,9 @@ The contribution of resource A is 50ms for the 0-50ms time range and 50ms/2 for 
 
 it overlaps with B. We get:
 
-`contribution\_A = (50 + 50 / 2) / 100 = .75`
+`contribution_A = (50 + 50 / 2) / 100 = .75`
 
-`contribution\_B = (50 / 2) / 100 = .25`
+`contribution_B = (50 / 2) / 100 = .25`
 
 This is computed based on all the resources in a single beacon. It is not done by default because it is computationally
 
