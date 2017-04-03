@@ -162,7 +162,7 @@ We call contribution of a resource to a page the proportion of the total load ti
 
 We want contribution scores to encourage parallelization and not only short resources.
 
-It enables us to study resource impact in a more meaningful way over simply looking at raw load times. 
+It enables us to study resource impact in a more meaningful way over simply looking at raw load times.
 
 Here is an example with only 2 resources to get some intuition into how it works:
 
