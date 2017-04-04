@@ -337,26 +337,24 @@
      */
     ResourceTimingDecompression.getSortedCells = function(rts) {
         // We have exactly 2 events per resource (start and end).
-        var cells = new Array(rts.length * 2);
+        // var cells = new Array(rts.length * 2);
 
-        var idx = 0;
+        var cells = [];
         for (var i = 0; i < rts.length; i++) {
             // Ignore resources with duration <= 0
             if (rts[i].responseEnd <= rts[i].startTime) {
                 continue;
             }
             // Increment on resource start
-            cells[idx] = {
+            cells.push({
                 ts: rts[i].startTime,
                 val: 1.0
-            };
-            idx++;
+            });
             // Decrement on resource end
-            cells[idx] = {
+            cells.push({
                 ts: rts[i].responseEnd,
                 val: -1.0
-            };
-            idx++;
+            });
         }
 
         // Sort in chronological order
