@@ -156,6 +156,43 @@ Results in:
 * `transferSize` = `parseInt("a", 36) + parseInt("b", 36)` = `21`
 * `decodedBodySize` = `parseInt("a", 36) + parseInt("c", 36)` = `22`
 
+## Resource Contributions
+
+We call contribution of a resource to a page the proportion of the total load time that can be blamed on that resource.
+We want contribution scores to encourage parallelization and not only short resources.
+
+It enables us to study resource impact in a more meaningful way over simply looking at raw load times.
+
+Here is an example with only 2 resources to get some intuition into how it works:
+
+```
+    0                                        100ms
+A   |-----------------------------------------|
+
+                      50ms                   100ms
+B                      |----------------------|
+```
+
+The contribution of resource A is 50ms for the 0-50ms time range and 50ms/2 for the 50ms to 100ms time range because
+it overlaps with B. We get:
+
+`contribution_A = (50 + 50 / 2) / 100 = .75`
+
+`contribution_B = (50 / 2) / 100 = .25`
+
+This is computed based on all the resources in a single beacon. It is not done by default because it is computationally
+expensive.
+
+Here is a code example to add contributions to your own resources:
+
+```js
+var original = ResourceTimingDecompression.decompressResources(rtData);
+// "original" is now an array of resource timings.
+
+ResourceTimingDecompression.addContribution(original);
+// Resources in "original" now have a field "contribution".
+```
+
 ## Tests
 
 ### resourcetiming-compression.js tests
