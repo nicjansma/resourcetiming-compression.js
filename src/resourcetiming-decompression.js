@@ -373,7 +373,7 @@
      * @returns{array} Array of cells with their contributions.
      */
     ResourceTimingDecompression.addCellContributions = function(cells) {
-        var tot = 1;
+        var tot = 0.0;
         var incr = 0.0;
         var deleteIdx = [];
         var currentSt = cells[0].ts;
@@ -391,15 +391,14 @@
                 continue;
             }
 
-            if ((i > 0) && (tot > 0)) {
-                incr = c.val;
-
+            incr = c.val;
+            if (tot > 0) {
+                // divide time delta by number of active resources.
                 c.val = (c.ts - currentSt) / tot;
-
-                currentSt = c.ts;
-
-                tot += incr;
             }
+
+            currentSt = c.ts;
+            tot += incr;
         }
 
         // Delete timestamps that don't delimit cells.
