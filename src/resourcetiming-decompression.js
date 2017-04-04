@@ -341,6 +341,10 @@
 
         var idx = 0;
         for (var i = 0; i < rts.length; i++) {
+            // Ignore resources with duration <= 0
+            if (rts[i].responseEnd <= rts[i].startTime) {
+                continue;
+            }
             // Increment on resource start
             cells[idx] = {
                 ts: rts[i].startTime,
