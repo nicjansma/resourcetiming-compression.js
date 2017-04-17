@@ -232,6 +232,14 @@
                 }).to.eql(ResourceTimingDecompression.decompressSize("a,5,a"));
             });
 
+            it("Should reverse [e, t-e, d-e] -> [e, dt, dd] -> 'e,dt,dd' for 200 gzipped responses (t > e, d > e)", function() {
+                expect({
+                    transferSize: 2000,
+                    encodedBodySize: 20,
+                    decodedBodySize: 0
+                }).to.eql(ResourceTimingDecompression.decompressSize("k,1j0,-k"));
+            });
+
             // retrieved from cache non-gzipped: [0, e, d: d=e] -> [e]
             it("Should reverse [e, t-e, d-e] -> [e, _, dd] -> 'e,_,0' -> 'e,_' for cached non-gzipped responses", function() {
                 expect({
