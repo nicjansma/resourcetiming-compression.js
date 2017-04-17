@@ -563,7 +563,7 @@
                     ]).reduce(function(acc, val) {
                         return acc + val.contribution;
                     }, 0)
-                )
+                );
             });
         });
     });
