@@ -31,9 +31,9 @@
      * The search is performed using binary search and the array is assumed
      * to be sorted in ascending order.
      *
-     * @param{array} arr haystack
-     * @param{any} x needle
-     * @param{function} by transform function (optional)
+     * @param {array} arr haystack
+     * @param {any} x needle
+     * @param {function} by transform function (optional)
      *
      * @returns {number} the desired index or arr.length if x is more than all values.
      */
@@ -68,9 +68,9 @@
      * The search is performed using binary search and the array is assumed
      * to be sorted in ascending order.
      *
-     * @param{array} arr haystack
-     * @param{any} x needle
-     * @param{function} by transform function (optional)
+     * @param {array} arr haystack
+     * @param {any} x needle
+     * @param {function} by transform function (optional)
      *
      * @returns {number} the desired index or -1 if x is less than all values.
      */
@@ -331,7 +331,7 @@
      * given array of resources.
      * The returned list of cells is sorted in chronological order.
      *
-     * @param{array} rts array of resource timings.
+     * @param {array} rts array of resource timings.
      *
      * @returns{array} Array of cells.
      */
@@ -368,7 +368,7 @@
     /**
      * Add contributions to the array of cells.
      *
-     * @param{array} cells array of cells that need contributions.
+     * @param {array} cells array of cells that need contributions.
      *
      * @returns{array} Array of cells with their contributions.
      */
@@ -412,8 +412,8 @@
     /**
      * Sum the contributions of a single resource based on an array of cells.
      *
-     * @param{array} cells Array of cells with their contributions.
-     * @param{ResourceTiming} rt a single resource timing object.
+     * @param {array} cells Array of cells with their contributions.
+     * @param {ResourceTiming} rt a single resource timing object.
      *
      * @returns{number} The total contribution for that resource.
      */
@@ -448,7 +448,7 @@
     /**
      * Adds contribution scores to all resources in the array.
      *
-     * @param{array} rts array of resource timings.
+     * @param {array} rts array of resource timings.
      *
      * @returns {array} Array of resource timings with their contributions.
      */
