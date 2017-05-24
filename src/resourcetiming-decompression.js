@@ -39,15 +39,26 @@
      * Initiator type map
      */
     ResourceTimingDecompression.INITIATOR_TYPES = {
+        /** Unknown type */
         "other": 0,
+        /** IMG element */
         "img": 1,
+        /** LINK element (i.e. CSS) */
         "link": 2,
+        /** SCRIPT element */
         "script": 3,
+        /** Resource referenced in CSS */
         "css": 4,
+        /** XMLHttpRequest */
         "xmlhttprequest": 5,
+        /** The root HTML page itself */
         "html": 6,
-        // IMAGE element inside a SVG
-        "image": 7
+        /** IMAGE element inside a SVG */
+        "image": 7,
+        /** [sendBeacon]{@link https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon} */
+        "beacon": 8,
+        /** [Fetch API]{@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API} */
+        "fetch": 9
     };
 
     /**
@@ -57,7 +68,9 @@
         "height": 0,
         "width": 1,
         "y": 2,
-        "x": 3
+        "x": 3,
+        "naturalHeight": 4,
+        "naturalWidth": 5
     };
 
     /**
@@ -99,6 +112,15 @@
 
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
+
+    // Script attributes
+    var SPECIAL_DATA_SCRIPT_ATTR_TYPE = "2";
+
+    // The following make up a bitmask
+    var ASYNC_ATTR = 0x1;
+    var DEFER_ATTR = 0x2;
+    // 0 => HEAD, 1 => BODY
+    var LOCAT_ATTR = 0x4;
 
     // Regular Expression to parse a URL
     var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
@@ -282,9 +304,18 @@
 
         url = ResourceTimingDecompression.reverseHostname(url);
         var initiatorType = parseInt(data[0], 10);
-        data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE) : [];
+        data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
-        var sizes = data.length > 1 ? data[1] : "";
+        var scriptData = "";
+        var sizes = "";
+
+        for (var i = 1; i < data.length; i++) {
+            if (data[i][0] === SPECIAL_DATA_SIZE_TYPE) {
+                sizes = data[i].substring(1);
+            } else if (data[i][0] === SPECIAL_DATA_SCRIPT_ATTR_TYPE) {
+                scriptData = data[i].substring(1);
+            }
+        }
 
         // convert all timings from base36
         for (var i = 0; i < timings.length; i++) {
@@ -330,6 +361,11 @@
             this.decompressSize(sizes, res);
         }
 
+        // decompress resource size data
+        if (scriptData.length > 0) {
+            this.decompressScriptData(scriptData, res);
+        }
+
         return res;
     };
 
@@ -356,7 +392,7 @@
      * Decompresses size information back into the specified resource
      *
      * @param {string} compressed Compressed string
-     * @param {ResourceTiming} resource ResourceTiming bject
+     * @param {ResourceTiming} resource ResourceTiming object
      * @returns {ResourceTiming} ResourceTiming object with decompressed sizes
      */
     ResourceTimingDecompression.decompressSize = function(compressed, resource) {
@@ -403,6 +439,29 @@
         resource.encodedBodySize = split[0];
         resource.transferSize = split[1];
         resource.decodedBodySize = split[2];
+
+        return resource;
+    };
+
+    /**
+     * Decompresses script data information
+     *
+     * @param {string} compressed Compressed string
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with script data
+     */
+    ResourceTimingDecompression.decompressScriptData = function(compressed, resource) {
+        var data = parseInt(compressed, 10);
+
+        if (data & ASYNC_ATTR) {
+            resource.scriptAsync = true;
+        }
+
+        if (data & DEFER_ATTR) {
+            resource.scriptDefer = true;
+        }
+
+        resource.scriptLocation = (data & LOCAT_ATTR) ? "BODY" : "HEAD";
 
         return resource;
     };

@@ -332,5 +332,49 @@
                 }));
             });
         });
+
+        describe("decompressScriptData()", function() {
+            it("Should retun an empty string if missing", function() {
+                expect({
+                    scriptLocation: "HEAD"
+                }).to.eql(ResourceTimingDecompression.decompressScriptData("", {}));
+            });
+
+            it("Should retun scriptAsync if set", function() {
+                expect({
+                    scriptAsync: true,
+                    scriptLocation: "HEAD"
+                }).to.eql(ResourceTimingDecompression.decompressScriptData("1", {}));
+            });
+
+            it("Should retun scriptDefer if set", function() {
+                expect({
+                    scriptDefer: true,
+                    scriptLocation: "HEAD"
+                }).to.eql(ResourceTimingDecompression.decompressScriptData("2", {}));
+            });
+
+            it("Should retun scriptAsync and scriptDefer if set", function() {
+                expect({
+                    scriptDefer: true,
+                    scriptAsync: true,
+                    scriptLocation: "HEAD"
+                }).to.eql(ResourceTimingDecompression.decompressScriptData("3", {}));
+            });
+
+            it("Should retun BODY if set", function() {
+                expect({
+                    scriptLocation: "BODY"
+                }).to.eql(ResourceTimingDecompression.decompressScriptData("4", {}));
+            });
+
+            it("Should retun scriptAsync and scriptDefer in the BODY if set", function() {
+                expect({
+                    scriptAsync: true,
+                    scriptDefer: true,
+                    scriptLocation: "BODY"
+                }).to.eql(ResourceTimingDecompression.decompressScriptData("7", {}));
+            });
+        });
     });
 }(typeof window !== "undefined" ? window : undefined));

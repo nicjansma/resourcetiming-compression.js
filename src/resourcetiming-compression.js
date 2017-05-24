@@ -39,15 +39,26 @@
      * Initiator type map
      */
     ResourceTimingCompression.INITIATOR_TYPES = {
+        /** Unknown type */
         "other": 0,
+        /** IMG element */
         "img": 1,
+        /** LINK element (i.e. CSS) */
         "link": 2,
+        /** SCRIPT element */
         "script": 3,
+        /** Resource referenced in CSS */
         "css": 4,
+        /** XMLHttpRequest */
         "xmlhttprequest": 5,
+        /** The root HTML page itself */
         "html": 6,
-        // IMAGE element inside a SVG
-        "image": 7
+        /** IMAGE element inside a SVG */
+        "image": 7,
+        /** [sendBeacon]{@link https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon} */
+        "beacon": 8,
+        /** [Fetch API]{@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API} */
+        "fetch": 9
     };
 
     // Words that will be broken (by ensuring the optimized trie doesn't contain
@@ -73,6 +84,15 @@
 
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
+
+    // Script attributes
+    var SPECIAL_DATA_SCRIPT_ATTR_TYPE = "2";
+
+    // The following make up a bitmask
+    var ASYNC_ATTR = 0x1;
+    var DEFER_ATTR = 0x2;
+    // 0 => HEAD, 1 => BODY
+    var LOCAT_ATTR = 0x4;
 
     // Regular Expression to parse a URL
     var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
@@ -288,7 +308,8 @@
      * @returns {PerformanceEntry[]} Performance entries
      */
     ResourceTimingCompression.findPerformanceEntriesForFrame = function(frame, isTopWindow, offset, depth) {
-        var entries = [], i, navEntries, navStart, frameNavStart, frameOffset, navEntry, t, frameLoc, rtEntry;
+        var entries = [], i, navEntries, navStart, frameNavStart, frameOffset, navEntry, t, frameLoc, rtEntry,
+        scripts = {}, a;
 
         if (typeof isTopWindow === "undefined") {
             isTopWindow = true;
@@ -308,6 +329,21 @@
 
         try {
             navStart = this.getNavStartTime(frame);
+
+            a = frame.document.createElement("a");
+
+            // get all scripts as an object keyed on script.src
+            Array.prototype
+                .forEach
+                .call(frame.document.getElementsByTagName("script"), function(s) {
+                    // Get canonical URL
+                    a.href = s.src;
+
+                    // only get external scripts
+                    if (a.href.match(/^https?:\/\//)) {
+                        scripts[a.href] = s;
+                    }
+                });
 
             // get sub-frames' entries first
             if (frame.frames) {
@@ -362,7 +398,11 @@
                         connectEnd: navEntry.connectEnd,
                         requestStart: navEntry.requestStart,
                         responseStart: navEntry.responseStart,
-                        responseEnd: navEntry.responseEnd
+                        responseEnd: navEntry.responseEnd,
+                        workerStart: navEntry.workerStart,
+                        encodedBodySize: navEntry.encodedBodySize,
+                        decodedBodySize: navEntry.decodedBodySize,
+                        transferSize: navEntry.transferSize
                     });
                 } else if (frame.performance.timing) {
                     // add a fake entry from the timing object
@@ -418,13 +458,28 @@
                     connectEnd: t.connectEnd ? (t.connectEnd + offset) : 0,
                     requestStart: t.requestStart ? (t.requestStart + offset) : 0,
                     responseStart: t.responseStart ? (t.responseStart + offset) : 0,
-                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0
+                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0,
+                    workerStart: t.workerStart ? (t.workerStart + offset) : 0,
+                    encodedBodySize: t.encodedBodySize,
+                    decodedBodySize: t.decodedBodySize,
+                    transferSize: t.transferSize
                 };
-                if (t.encodedBodySize || t.decodedBodySize || t.transferSize) {
-                    rtEntry.encodedBodySize = t.encodedBodySize;
-                    rtEntry.decodedBodySize = t.decodedBodySize;
-                    rtEntry.transferSize = t.transferSize;
+
+                // If this is a script, set its flags
+                if (t.initiatorType === "script" && scripts[t.name]) {
+                    var s = scripts[t.name];
+
+                    // Add async & defer based on attribute values
+                    rtEntry.scriptAttrs = (s.async ? ASYNC_ATTR : 0) | (s.defer ? DEFER_ATTR : 0);
+
+                    while (s.nodeType === 1 && s.nodeName !== "BODY") {
+                        s = s.parentNode;
+                    }
+
+                    // Add location by traversing up the tree until we either hit BODY or document
+                    rtEntry.scriptAttrs |= (s.nodeName === "BODY" ? LOCAT_ATTR : 0);
                 }
+
                 frameFixedEntries.push(rtEntry);
             }
 
@@ -485,7 +540,7 @@
             for (i = 0; i < elements.length; i++) {
                 el = elements[i];
 
-                // look at this element if it has a src attribute, and we haven't already looked at it
+                // look at this element if it has a src attribute or xlink:href, and we haven't already looked at it
                 if (el) {
                     // src = IMG, IFRAME
                     // xlink:href = svg:IMAGE
@@ -508,6 +563,14 @@
                                 Math.round(rect.top + y),
                                 Math.round(rect.left + x),
                             ];
+
+                            // If this is an image, it has a naturalHeight & naturalWidth
+                            // if these are different from its display height and width, we should report that
+                            // because it indicates scaling in HTML
+                            if ((el.naturalHeight || el.naturalWidth) &&
+                                (entries[src][0] !== el.naturalHeight || entries[src][1] !== el.naturalWidth)) {
+                                entries[src].push(el.naturalHeight, el.naturalWidth);
+                            }
                         }
                     }
                 }
@@ -558,13 +621,19 @@
             return [];
         }
 
+        // sort entries by start time
+        entries.sort(function(a, b) {
+            return a.startTime - b.startTime;
+        });
+
         var filteredEntries = [];
         for (i = 0; i < entries.length; i++) {
             e = entries[i];
 
             // skip non-resource URLs
             if (e.name.indexOf("about:") === 0 ||
-                e.name.indexOf("javascript:") === 0) {
+                e.name.indexOf("javascript:") === 0 ||
+                e.name.indexOf("res:") === 0) {
                 continue;
             }
 
@@ -739,6 +808,10 @@
         // gather visible entries on the page
         visibleEntries = this.getVisibleEntries(win);
 
+        if (!entries || !entries.length) {
+            return {};
+        }
+
         for (i = 0; i < entries.length; i++) {
             e = entries[i];
 
@@ -778,6 +851,10 @@
             var compSize = this.compressSize(e);
             if (compSize !== "") {
                 data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE + compSize;
+            }
+
+            if (e.hasOwnProperty("scriptAttrs")) {
+                data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SCRIPT_ATTR_TYPE + e.scriptAttrs;
             }
 
             url = this.trimUrl(e.name, this.trimUrls);
