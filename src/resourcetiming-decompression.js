@@ -47,7 +47,9 @@
         "xmlhttprequest": 5,
         "html": 6,
         // IMAGE element inside a SVG
-        "image": 7
+        "image": 7,
+        "beacon": 8,
+        "fetch": 9
     };
 
     /**

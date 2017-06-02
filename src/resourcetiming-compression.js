@@ -47,7 +47,9 @@
         "xmlhttprequest": 5,
         "html": 6,
         // IMAGE element inside a SVG
-        "image": 7
+        "image": 7,
+        "beacon": 8,
+        "fetch": 9
     };
 
     // Words that will be broken (by ensuring the optimized trie doesn't contain
