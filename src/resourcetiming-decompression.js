@@ -249,7 +249,6 @@
                     timings = timings.splice(1);
                 }
 
-
                 // end-node
                 for (var i = 0; i < timings.length; i++) {
                     var resourceData = timings[i];
@@ -351,9 +350,6 @@
         }
 
         return resource;
-    };
-
-    ResourceTimingDecompression.decompressScriptType = function(compressed) {
     };
 
     /**
@@ -622,10 +618,10 @@
      *
      * @param {string} compressed String with a single integer.
      * @param {ResourceTiming} resource ResourceTiming object.
-     * @return {ResourceTiming} ResourceTiming object with decompressed script type.
+     * @returns {ResourceTiming} ResourceTiming object with decompressed script type.
      */
-    ResourceTimingDecompression.decompressScriptType = function (compressed, resource) {
-        var data = parseInt(compressed);
+    ResourceTimingDecompression.decompressScriptType = function(compressed, resource) {
+        var data = parseInt(compressed, 10);
 
         if (!resource) {
             resource = {};
@@ -721,7 +717,6 @@
 
         return resource;
     };
-
 
     /**
      * Reverse the hostname portion of a URL
