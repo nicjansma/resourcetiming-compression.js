@@ -370,7 +370,7 @@
         });
 
         describe("decompressSpecialData()", function() {
-            it("Should add sizes to the resource.", function () {
+            it("Should add sizes to the resource.", function() {
                 expect({
                     transferSize: 10,
                     encodedBodySize: 10,
@@ -380,7 +380,7 @@
                 ));
             });
 
-            it("Should add script type to the resource.", function () {
+            it("Should add script type to the resource.", function() {
                 expect({
                     scriptAsync: true,
                     scriptDefer: false,
@@ -390,7 +390,7 @@
                 ));
             });
 
-            it("Should add script type to the resource.", function () {
+            it("Should add script type to the resource.", function() {
                 expect({
                     scriptAsync: true,
                     scriptDefer: true,
