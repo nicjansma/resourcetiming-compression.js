@@ -335,7 +335,7 @@
      *
      * @param {array} rts array of resource timings.
      *
-     * @returns{array} Array of cells.
+     * @returns {array} Array of cells.
      */
     ResourceTimingDecompression.getSortedCells = function(rts) {
         // We have exactly 2 events per resource (start and end).
@@ -372,7 +372,7 @@
      *
      * @param {array} cells array of cells that need contributions.
      *
-     * @returns{array} Array of cells with their contributions.
+     * @returns {array} Array of cells with their contributions.
      */
     ResourceTimingDecompression.addCellContributions = function(cells) {
         var tot = 0.0;
@@ -417,7 +417,7 @@
      * @param {array} cells Array of cells with their contributions.
      * @param {ResourceTiming} rt a single resource timing object.
      *
-     * @returns{number} The total contribution for that resource.
+     * @returns {number} The total contribution for that resource.
      */
     ResourceTimingDecompression.sumContributions = function(cells, rt) {
         if (!rt || typeof rt.startTime === "undefined" ||
