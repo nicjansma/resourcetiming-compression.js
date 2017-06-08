@@ -134,7 +134,18 @@
         "height": 0,
         "width": 1,
         "y": 2,
-        "x": 3
+        "x": 3,
+        "naturalHeight": 4,
+        "naturalWidth": 5
+    };
+
+    /**
+     * Script mask map
+     */
+    ResourceTimingDecompression.SCRIPT_ATTRIBUTES = {
+        "scriptAsync": 1,
+        "scriptDefer": 2,
+        "scriptBody": 4
     };
 
     /**
@@ -166,6 +177,12 @@
     ResourceTimingDecompression.REV_DIMENSION_NAMES = ResourceTimingDecompression.
         getRevMap(ResourceTimingDecompression.DIMENSION_NAMES);
 
+    /**
+     * Reverse script attribute map
+     */
+    ResourceTimingDecompression.REV_SCRIPT_ATTRIBUTES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.SCRIPT_ATTRIBUTES);
+
     // Any ResourceTiming data time that starts with this character is not a time,
     // but something else (like dimension data)
     var SPECIAL_DATA_PREFIX = "*";
@@ -176,6 +193,9 @@
 
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
+
+    // Dimension data special type
+    var SPECIAL_DATA_SCRIPT_TYPE = "2";
 
     // Regular Expression to parse a URL
     var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
@@ -215,15 +235,20 @@
                 // add all occurences
                 var timings = node.split("|");
 
+                if (timings.length === 0) {
+                    continue;
+                }
+
                 // Make sure we reset the dimensions before each new resource.
                 dimensionData = undefined;
 
-                if (timings.length > 0 && this.isDimensionData(timings[0])) {
+                if (this.isDimensionData(timings[0])) {
                     dimensionData = this.decompressDimension(timings[0]);
 
                     // Remove the dimension data from our timings array
                     timings = timings.splice(1);
                 }
+
 
                 // end-node
                 for (var i = 0; i < timings.length; i++) {
@@ -326,6 +351,9 @@
         }
 
         return resource;
+    };
+
+    ResourceTimingDecompression.decompressScriptType = function(compressed) {
     };
 
     /**
@@ -518,9 +546,10 @@
 
         url = ResourceTimingDecompression.reverseHostname(url);
         var initiatorType = parseInt(data[0], 10);
-        data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE) : [];
+        data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
         var sizes = data.length > 1 ? data[1] : "";
+        var specialData = data.length > 1 ? data[1] : "";
 
         // convert all timings from base36
         for (var i = 0; i < timings.length; i++) {
@@ -563,7 +592,7 @@
 
         // decompress resource size data
         if (sizes.length > 0) {
-            this.decompressSize(sizes, res);
+            this.decompressSpecialData(specialData, res);
         }
 
         return res;
@@ -586,6 +615,29 @@
         }
 
         return 0;
+    };
+
+    /**
+     * Decompresses script load type into the specified resource.
+     *
+     * @param {string} compressed String with a single integer.
+     * @param {ResourceTiming} resource ResourceTiming object.
+     * @return {ResourceTiming} ResourceTiming object with decompressed script type.
+     */
+    ResourceTimingDecompression.decompressScriptType = function (compressed, resource) {
+        var data = parseInt(compressed);
+
+        if (!resource) {
+            resource = {};
+        }
+
+        for (var key in this.SCRIPT_ATTRIBUTES) {
+            if (this.SCRIPT_ATTRIBUTES.hasOwnProperty(key)) {
+                resource[key] = (data & this.SCRIPT_ATTRIBUTES[key]) === this.SCRIPT_ATTRIBUTES[key];
+            }
+        }
+
+        return resource;
     };
 
     /**
@@ -642,6 +694,34 @@
 
         return resource;
     };
+
+    /**
+     * Decompresses special data such as resource size or script type into the given resource.
+     *
+     * @param {string} compressed Compressed string
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with decompressed special data
+     */
+    ResourceTimingDecompression.decompressSpecialData = function(compressed, resource) {
+        var dataType;
+
+        if (!compressed || compressed.length === 0) {
+            return resource;
+        }
+
+        dataType = compressed[0];
+
+        compressed = compressed.substring(1);
+
+        if (dataType === SPECIAL_DATA_SIZE_TYPE) {
+            resource = this.decompressSize(compressed, resource);
+        } else if (dataType === SPECIAL_DATA_SCRIPT_TYPE) {
+            resource = this.decompressScriptType(compressed, resource);
+        }
+
+        return resource;
+    };
+
 
     /**
      * Reverse the hostname portion of a URL

@@ -369,6 +369,38 @@
             });
         });
 
+        describe("decompressSpecialData()", function() {
+            it("Should add sizes to the resource.", function () {
+                expect({
+                    transferSize: 10,
+                    encodedBodySize: 10,
+                    decodedBodySize: 10
+                }).to.eql(ResourceTimingDecompression.decompressSpecialData(
+                    "1a"
+                ));
+            });
+
+            it("Should add script type to the resource.", function () {
+                expect({
+                    scriptAsync: true,
+                    scriptDefer: false,
+                    scriptBody: false
+                }).to.eql(ResourceTimingDecompression.decompressSpecialData(
+                    "21"
+                ));
+            });
+
+            it("Should add script type to the resource.", function () {
+                expect({
+                    scriptAsync: true,
+                    scriptDefer: true,
+                    scriptBody: false
+                }).to.eql(ResourceTimingDecompression.decompressSpecialData(
+                    "23"
+                ));
+            });
+        });
+
         describe("addContribution()", function() {
             it("Should add contribution scores to the resources.", function() {
                 expect([
