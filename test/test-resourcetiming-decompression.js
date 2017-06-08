@@ -340,5 +340,239 @@
                 }));
             });
         });
+
+        describe("searchSortedLast()", function() {
+            it("Should return -1, because x is <= all the values.", function() {
+                expect(
+                    -1
+                ).to.eql(ResourceTimingDecompression.searchSortedLast([1, 2, 3], 0));
+            });
+
+            it("Should return 2, because x is > all the values.", function() {
+                expect(
+                    2
+                ).to.eql(ResourceTimingDecompression.searchSortedLast([1, 2, 3], 4));
+            });
+        });
+
+        describe("searchSortedFirst()", function() {
+            it("Should return 0, because x is <= all the values.", function() {
+                expect(
+                    0
+                ).to.eql(ResourceTimingDecompression.searchSortedFirst([1, 2, 3], 0));
+            });
+
+            it("Should return 3, because x is > all the values.", function() {
+                expect(
+                    3
+                ).to.eql(ResourceTimingDecompression.searchSortedFirst([1, 2, 3], 4));
+            });
+        });
+
+        describe("addContribution()", function() {
+            it("Should add contribution scores to the resources.", function() {
+                expect([
+                    { startTime: 0, responseEnd: 320, contribution: 0.609375 },
+                    { startTime: 100, responseEnd: 260, contribution: 0.203125 },
+                    { startTime: 170, responseEnd: 320, contribution: 0.1875 }
+                ]).to.eql(ResourceTimingDecompression.addContribution([
+                    {
+                        startTime: 0,
+                        responseEnd: 320
+                    },
+                    {
+                        startTime: 100,
+                        responseEnd: 260
+                    },
+                    {
+                        startTime: 170,
+                        responseEnd: 320
+                    }
+                ]));
+            });
+
+            it("Should add contribution scores correctly handling empty intervals.", function() {
+                expect(0.9274587305277846).to.eql(
+                    // Realistic values found in the wild.
+                    ResourceTimingDecompression.addContribution([
+                        {startTime: 1801, responseEnd: 3818},
+                        {startTime: 3311, responseEnd: 3590},
+                        {startTime: 3612, responseEnd: 3647},
+                        {startTime: 1548, responseEnd: 1562},
+                        {startTime: 910, responseEnd: 912},
+                        {startTime: 2806, responseEnd: 2852},
+                        {startTime: 2806, responseEnd: 2859},
+                        {startTime: 2797, responseEnd: 2831},
+                        {startTime: 2805, responseEnd: 2814},
+                        {startTime: 2803, responseEnd: 2810},
+                        {startTime: 3836, responseEnd: 3843},
+                        {startTime: 2957, responseEnd: 3292},
+                        {startTime: 2701, responseEnd: 3016},
+                        {startTime: 3430, responseEnd: 4241},
+                        {startTime: 2757, responseEnd: 3091},
+                        {startTime: 2235, responseEnd: 2540},
+                        {startTime: 2958, responseEnd: 3486},
+                        {startTime: 2303, responseEnd: 2838},
+                        {startTime: 2600, responseEnd: 2886},
+                        {startTime: 0, responseEnd: 791},
+                        {startTime: 843, responseEnd: 1137},
+                        {startTime: 2674, responseEnd: 2687},
+                        {startTime: 2670, responseEnd: 2681},
+                        {startTime: 2669, responseEnd: 2680},
+                        {startTime: 2669, responseEnd: 2679},
+                        {startTime: 2672, responseEnd: 2686},
+                        {startTime: 2667, responseEnd: 2670},
+                        {startTime: 2675, responseEnd: 2688},
+                        {startTime: 3214, responseEnd: 0},
+                        {startTime: 2675, responseEnd: 2688},
+                        {startTime: 2673, responseEnd: 2687},
+                        {startTime: 2676, responseEnd: 2688},
+                        {startTime: 2672, responseEnd: 2686},
+                        {startTime: 2671, responseEnd: 2683},
+                        {startTime: 2674, responseEnd: 2687},
+                        {startTime: 2671, responseEnd: 2685},
+                        {startTime: 1195, responseEnd: 1208},
+                        {startTime: 2668, responseEnd: 2671},
+                        {startTime: 844, responseEnd: 865},
+                        {startTime: 843, responseEnd: 853},
+                        {startTime: 3480, responseEnd: 0},
+                        {startTime: 1185, responseEnd: 1188},
+                        {startTime: 1288, responseEnd: 0},
+                        {startTime: 2714, responseEnd: 0},
+                        {startTime: 3316, responseEnd: 0},
+                        {startTime: 1288, responseEnd: 0},
+                        {startTime: 1291, responseEnd: 0},
+                        {startTime: 1809, responseEnd: 0},
+                        {startTime: 1205, responseEnd: 0},
+                        {startTime: 3215, responseEnd: 0},
+                        {startTime: 2490, responseEnd: 0},
+                        {startTime: 1809, responseEnd: 0},
+                        {startTime: 1578, responseEnd: 0},
+                        {startTime: 1193, responseEnd: 0},
+                        {startTime: 3330, responseEnd: 0},
+                        {startTime: 1291, responseEnd: 0},
+                        {startTime: 844, responseEnd: 0},
+                        {startTime: 1290, responseEnd: 0},
+                        {startTime: 2760, responseEnd: 2762},
+                        {startTime: 876, responseEnd: 883},
+                        {startTime: 1205, responseEnd: 0},
+                        {startTime: 1186, responseEnd: 0},
+                        {startTime: 844, responseEnd: 0},
+                        {startTime: 1195, responseEnd: 0},
+                        {startTime: 839, responseEnd: 871},
+                        {startTime: 844, responseEnd: 856},
+                        {startTime: 844, responseEnd: 857},
+                        {startTime: 869, responseEnd: 877},
+                        {startTime: 2798, responseEnd: 2801},
+                        {startTime: 3597, responseEnd: 0},
+                        {startTime: 3597, responseEnd: 0},
+                        {startTime: 843, responseEnd: 858},
+                        {startTime: 3534, responseEnd: 3547},
+                        {startTime: 2798, responseEnd: 2802},
+                        {startTime: 1194, responseEnd: 1212},
+                        {startTime: 1194, responseEnd: 1210},
+                        {startTime: 844, responseEnd: 865},
+                        {startTime: 1194, responseEnd: 1210},
+                        {startTime: 844, responseEnd: 866},
+                        {startTime: 1194, responseEnd: 1378},
+                        {startTime: 1194, responseEnd: 1209},
+                        {startTime: 1194, responseEnd: 1214},
+                        {startTime: 3659, responseEnd: 3661},
+                        {startTime: 1202, responseEnd: 1211},
+                        {startTime: 1288, responseEnd: 1290},
+                        {startTime: 2071, responseEnd: 2074},
+                        {startTime: 1184, responseEnd: 1187},
+                        {startTime: 3141, responseEnd: 3142},
+                        {startTime: 2802, responseEnd: 2806},
+                        {startTime: 3854, responseEnd: 3857},
+                        {startTime: 3455, responseEnd: 3473},
+                        {startTime: 3459, responseEnd: 3477},
+                        {startTime: 3786, responseEnd: 3882},
+                        {startTime: 2576, responseEnd: 2650},
+                        {startTime: 2806, responseEnd: 2815},
+                        {startTime: 3508, responseEnd: 3610},
+                        {startTime: 1160, responseEnd: 1164},
+                        {startTime: 2804, responseEnd: 2899},
+                        {startTime: 3790, responseEnd: 3792},
+                        {startTime: 3587, responseEnd: 3589},
+                        {startTime: 3690, responseEnd: 3691},
+                        {startTime: 875, responseEnd: 0},
+                        {startTime: 876, responseEnd: 0},
+                        {startTime: 875, responseEnd: 0},
+                        {startTime: 876, responseEnd: 0},
+                        {startTime: 875, responseEnd: 0},
+                        {startTime: 875, responseEnd: 0},
+                        {startTime: 875, responseEnd: 0},
+                        {startTime: 875, responseEnd: 0},
+                        {startTime: 875, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 3821, responseEnd: 3825},
+                        {startTime: 3821, responseEnd: 3826},
+                        {startTime: 871, responseEnd: 0},
+                        {startTime: 872, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 3821, responseEnd: 3824},
+                        {startTime: 3821, responseEnd: 3825},
+                        {startTime: 871, responseEnd: 0},
+                        {startTime: 872, responseEnd: 0},
+                        {startTime: 872, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 879, responseEnd: 0},
+                        {startTime: 3821, responseEnd: 3826},
+                        {startTime: 871, responseEnd: 0},
+                        {startTime: 3844, responseEnd: 3899},
+                        {startTime: 3469, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 874, responseEnd: 0},
+                        {startTime: 874, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 874, responseEnd: 0},
+                        {startTime: 874, responseEnd: 0},
+                        {startTime: 874, responseEnd: 0},
+                        {startTime: 874, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 1580, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 1581, responseEnd: 0},
+                        {startTime: 871, responseEnd: 0},
+                        {startTime: 871, responseEnd: 0},
+                        {startTime: 872, responseEnd: 0},
+                        {startTime: 871, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 2717, responseEnd: 0},
+                        {startTime: 2717, responseEnd: 0},
+                        {startTime: 872, responseEnd: 0},
+                        {startTime: 872, responseEnd: 0},
+                        {startTime: 873, responseEnd: 0},
+                        {startTime: 872, responseEnd: 0},
+                        {startTime: 872, responseEnd: 0},
+                        {startTime: 1982, responseEnd: 2017},
+                        {startTime: 953, responseEnd: 955},
+                        {startTime: 3564, responseEnd: 3612},
+                        {startTime: 3580, responseEnd: 3622},
+                        {startTime: 2576, responseEnd: 2582},
+                        {startTime: 1160, responseEnd: 1163},
+                        {startTime: 2806, responseEnd: 2859},
+                        {startTime: 1238, responseEnd: 1586},
+                        {startTime: 2576, responseEnd: 2582},
+                        {startTime: 3417, responseEnd: 3446},
+                        {startTime: 1403, responseEnd: 1454},
+                        {startTime: 1806, responseEnd: 1815},
+                        {startTime: 875, responseEnd: 884},
+                        {startTime: 1825, responseEnd: 1829},
+                        {startTime: 3489, responseEnd: 3491},
+                        {startTime: 1549, responseEnd: 1563},
+                        {startTime: 2817, responseEnd: 2822},
+                        {startTime: 3650, responseEnd: 3685},
+                        {startTime: 1534, responseEnd: 1537},
+                        {startTime: 3399, responseEnd: 4301},
+                        {startTime: 2968, responseEnd: 2970},
+                        {startTime: 2805, responseEnd: 2838}
+                    ]).reduce(function(acc, val) {
+                        return acc + val.contribution;
+                    }, 0)
+                );
+            });
+        });
     });
 }(typeof window !== "undefined" ? window : undefined));
