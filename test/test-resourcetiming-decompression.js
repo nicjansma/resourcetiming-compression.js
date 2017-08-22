@@ -606,5 +606,55 @@
                 );
             });
         });
+
+      describe("decompressServerTiming", function() {
+        var optimized = [["m0", "d0a", "d0b"], ["m1", "d1a", "d1b"], "m2"];
+        it("Should resolve to m0-d0a", function() {
+          ["123", "123:0", "123:.0", "123:0.0"].forEach(function(compressed) {
+            expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
+              name: "m0",
+              description: "d0a",
+              duration: 123
+            });
+          });
+        });
+        it("Should resolve to m0-d0b", function() {
+          ["123:.1", "123:0.1"].forEach(function(compressed) {
+            expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
+              name: "m0",
+              description: "d0b",
+              duration: 123
+            });
+          });
+        });
+        it("Should resolve to m1-d1a", function() {
+          ["123:1", "123:1.0"].forEach(function(compressed) {
+            expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
+              name: "m1",
+              description: "d1a",
+              duration: 123
+            });
+          });
+        });
+        it("Should resolve to m1-d1b", function() {
+          ["123:1.1"].forEach(function(compressed) {
+            expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
+              name: "m1",
+              description: "d1b",
+              duration: 123
+            });
+          });
+        });
+        it("Should resolve to m1-<empty string>", function() {
+          ["123:2"].forEach(function(compressed) {
+            expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
+              name: "m2",
+              description: "",
+              duration: 123
+            });
+          });
+        });
+      });
+
     });
 }(typeof window !== "undefined" ? window : undefined));

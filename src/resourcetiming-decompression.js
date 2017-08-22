@@ -197,6 +197,9 @@
     // Dimension data special type
     var SPECIAL_DATA_SCRIPT_TYPE = "2";
 
+    // Dimension data special type
+    var SPECIAL_DATA_SERVERTIMING_TYPE = "3";
+
     // Regular Expression to parse a URL
     var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
 
@@ -204,11 +207,12 @@
      * Decompresses a compressed ResourceTiming trie
      *
      * @param {object} rt ResourceTiming trie
+     * @param {array} st server timing entries lookup
      * @param {string} prefix URL prefix for the current node
      *
      * @returns {ResourceTiming[]} ResourceTiming array
      */
-    ResourceTimingDecompression.decompressResources = function(rt, prefix) {
+    ResourceTimingDecompression.decompressResources = function(rt, st, prefix) {
         var resources = [];
 
         // Dimension data for resources.
@@ -261,14 +265,14 @@
                     // Decode resource and add dimension data to it.
                     resources.push(
                         this.addDimension(
-                            this.decodeCompressedResource(resourceData, nodeKey),
+                            this.decodeCompressedResource(resourceData, nodeKey, st),
                             dimensionData
                         )
                     );
                 }
             } else {
                 // continue down
-                var nodeResources = this.decompressResources(node, nodeKey);
+                var nodeResources = this.decompressResources(node, st, nodeKey);
 
                 resources = resources.concat(nodeResources);
             }
@@ -531,11 +535,12 @@
      *
      * @param {string} data Compressed timing data
      * @param {string} url  URL
+     * @param {array} st server timing entries lookup
      *
      * @returns {ResourceTiming} ResourceTiming pseudo-object (containing all of the properties of a
      * ResourceTiming object)
      */
-    ResourceTimingDecompression.decodeCompressedResource = function(data, url) {
+    ResourceTimingDecompression.decodeCompressedResource = function(data, url, st) {
         if (!data || !url) {
             return {};
         }
@@ -588,7 +593,7 @@
 
         // decompress resource size data
         if (sizes.length > 0) {
-            this.decompressSpecialData(specialData, res);
+            this.decompressSpecialData(specialData, res, st);
         }
 
         return res;
@@ -696,9 +701,10 @@
      *
      * @param {string} compressed Compressed string
      * @param {ResourceTiming} resource ResourceTiming object
+     * @param {array} st server timing entries lookup
      * @returns {ResourceTiming} ResourceTiming object with decompressed special data
      */
-    ResourceTimingDecompression.decompressSpecialData = function(compressed, resource) {
+    ResourceTimingDecompression.decompressSpecialData = function(compressed, resource, st) {
         var dataType;
 
         if (!compressed || compressed.length === 0) {
@@ -713,6 +719,8 @@
             resource = this.decompressSize(compressed, resource);
         } else if (dataType === SPECIAL_DATA_SCRIPT_TYPE) {
             resource = this.decompressScriptType(compressed, resource);
+        } else if (dataType === SPECIAL_DATA_SERVERTIMING_TYPE) {
+          resource = this.decompressServerTimingEntries(st, compressed, resource);
         }
 
         return resource;
@@ -745,6 +753,57 @@
         }
         return o;
     };
+
+  /**
+   * @param {array} lookup server timing entries lookup
+   * @param {string} compressedList server timing entries for a resource
+   * @param {ResourceTiming} resource ResourceTiming object.
+   * @returns {ResourceTiming} ResourceTiming object with decompressed server timing entries.
+   */
+  ResourceTimingDecompression.decompressServerTimingEntries = function(lookup, compressedList, resource) {
+    if (lookup && compressedList) {
+      resource.serverTiming = compressedList.split(",").map(
+        function(compressedEntry) {
+          return this.decompressServerTiming(lookup, compressedEntry);
+        }, this);
+    }
+    return resource;
+  };
+
+  /**
+   * @param {array} lookup server timing entries lookup
+   * @param {string} key key into the lookup for one server timing entry
+   * @returns {object} server timing entry
+   */
+  ResourceTimingDecompression.decompressServerTiming = function(lookup, key) {
+    var split = key.split(":");
+    var duration = Number(split[0]);
+    var entryIndex = 0, descriptionIndex = 0;
+
+    if (split.length > 1) {
+      var identity = split[1].split(".");
+      if (identity[0] !== "") {
+        entryIndex = Number(identity[0]);
+      }
+      if (identity.length > 1) {
+        descriptionIndex = Number(identity[1]);
+      }
+    }
+
+    var name, description = "";
+    if (Array.isArray(lookup[entryIndex])) {
+      name = lookup[entryIndex][0];
+      description = lookup[entryIndex][1 + descriptionIndex] || "";
+    } else {
+      name = lookup[entryIndex];
+    }
+
+    return {
+      name: name,
+      duration: duration,
+      description: description
+    };
+  };
 
     //
     // Export to the appropriate location

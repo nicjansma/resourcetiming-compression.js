@@ -72,7 +72,7 @@ var ResourceTimingCompression = require("resourcetiming-compression").ResourceTi
 To get all of the compressed resources, you can simply call:
 
 ```js
-var rtData = ResourceTimingCompression.getResourceTiming();
+var {restiming, servertiming} = ResourceTimingCompression.getResourceTiming();
 ```
 
 ### resourcetiming-decompression.js
@@ -92,7 +92,7 @@ var ResourceTimingDecompression = require("resourcetiming-compression").Resource
 To decompress your resources, you can simply call:
 
 ```js
-var original = ResourceTimingDecompression.decompressResources(rtData);
+var original = ResourceTimingDecompression.decompressResources(restiming, servertiming);
 ```
 
 ## Resource Dimensions
