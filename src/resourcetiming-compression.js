@@ -47,7 +47,9 @@
         "xmlhttprequest": 5,
         "html": 6,
         // IMAGE element inside a SVG
-        "image": 7
+        "image": 7,
+        "beacon": 8,
+        "fetch": 9
     };
 
     // Words that will be broken (by ensuring the optimized trie doesn't contain
@@ -609,12 +611,14 @@
             resource.decodedBodySize ||
             resource.transferSize) {
             //
-            // transferSize: how many bytes were over the wire. It can be 0 in the case of X-O,
-            // or if it was fetched from a cache.
+            // transferSize: the size of the fetched resource ("over the wire"), including the response header fields
+            // and the response payload body. It can be 0 in the case of X-O, or if it was fetched from a cache.
             //
-            // encodedBodySize: the size after applying encoding (e.g. gzipped size).  It is 0 if X-O.
+            // encodedBodySize: the size of the response payload body after applying encoding (e.g. gzipped size).  It
+            // is 0 if X-O.
             //
-            // decodedBodySize: the size after removing encoding (e.g. the original content size).  It is 0 if X-O.
+            // decodedBodySize: the size of response payload body after removing encoding (e.g. the original content
+            // size). It is 0 if X-O.
             //
             // Here are the possible combinations of values: [encodedBodySize, transferSize, decodedBodySize]
             //
@@ -631,7 +635,11 @@
             sDec = resource.decodedBodySize;
 
             // convert to an array
-            sizes = [sEnc, sTrans ? sTrans - sEnc : "_", sDec ? sDec - sEnc : 0];
+            sizes = [
+                sEnc,
+                sTrans ? sTrans - sEnc : "_",
+                sDec - sEnc
+            ];
 
             // change everything to base36 and remove any trailing ,s
             return sizes.map(this.toBase36).join(",").replace(/,+$/, "");
