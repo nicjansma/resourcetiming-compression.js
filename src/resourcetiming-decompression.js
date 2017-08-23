@@ -763,6 +763,10 @@
    * @returns {ResourceTiming} ResourceTiming object with decompressed server timing entries.
    */
     ResourceTimingDecompression.decompressServerTimingEntries = function(lookup, compressedList, resource) {
+        if (typeof resource === "undefined") {
+            resource = {};
+        }
+
         if (lookup && compressedList) {
             resource.serverTiming = compressedList.split(",").map(function(compressedEntry) {
                 return this.decompressServerTiming(lookup, compressedEntry);
