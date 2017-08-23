@@ -720,7 +720,7 @@
         } else if (dataType === SPECIAL_DATA_SCRIPT_TYPE) {
             resource = this.decompressScriptType(compressed, resource);
         } else if (dataType === SPECIAL_DATA_SERVERTIMING_TYPE) {
-          resource = this.decompressServerTimingEntries(st, compressed, resource);
+            resource = this.decompressServerTimingEntries(st, compressed, resource);
         }
 
         return resource;
@@ -760,50 +760,50 @@
    * @param {ResourceTiming} resource ResourceTiming object.
    * @returns {ResourceTiming} ResourceTiming object with decompressed server timing entries.
    */
-  ResourceTimingDecompression.decompressServerTimingEntries = function(lookup, compressedList, resource) {
-    if (lookup && compressedList) {
-      resource.serverTiming = compressedList.split(",").map(
+    ResourceTimingDecompression.decompressServerTimingEntries = function(lookup, compressedList, resource) {
+        if (lookup && compressedList) {
+            resource.serverTiming = compressedList.split(",").map(
         function(compressedEntry) {
-          return this.decompressServerTiming(lookup, compressedEntry);
+            return this.decompressServerTiming(lookup, compressedEntry);
         }, this);
-    }
-    return resource;
-  };
+        }
+        return resource;
+    };
 
   /**
    * @param {array} lookup server timing entries lookup
    * @param {string} key key into the lookup for one server timing entry
    * @returns {object} server timing entry
    */
-  ResourceTimingDecompression.decompressServerTiming = function(lookup, key) {
-    var split = key.split(":");
-    var duration = Number(split[0]);
-    var entryIndex = 0, descriptionIndex = 0;
+    ResourceTimingDecompression.decompressServerTiming = function(lookup, key) {
+        var split = key.split(":");
+        var duration = Number(split[0]);
+        var entryIndex = 0, descriptionIndex = 0;
 
-    if (split.length > 1) {
-      var identity = split[1].split(".");
-      if (identity[0] !== "") {
-        entryIndex = Number(identity[0]);
-      }
-      if (identity.length > 1) {
-        descriptionIndex = Number(identity[1]);
-      }
-    }
+        if (split.length > 1) {
+            var identity = split[1].split(".");
+            if (identity[0] !== "") {
+                entryIndex = Number(identity[0]);
+            }
+            if (identity.length > 1) {
+                descriptionIndex = Number(identity[1]);
+            }
+        }
 
-    var name, description = "";
-    if (Array.isArray(lookup[entryIndex])) {
-      name = lookup[entryIndex][0];
-      description = lookup[entryIndex][1 + descriptionIndex] || "";
-    } else {
-      name = lookup[entryIndex];
-    }
+        var name, description = "";
+        if (Array.isArray(lookup[entryIndex])) {
+            name = lookup[entryIndex][0];
+            description = lookup[entryIndex][1 + descriptionIndex] || "";
+        } else {
+            name = lookup[entryIndex];
+        }
 
-    return {
-      name: name,
-      duration: duration,
-      description: description
+        return {
+            name: name,
+            duration: duration,
+            description: description
+        };
     };
-  };
 
     //
     // Export to the appropriate location

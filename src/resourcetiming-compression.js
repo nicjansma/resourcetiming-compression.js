@@ -805,21 +805,21 @@
                 data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE + compSize;
             }
 
-          if (e.serverTiming.length) {
-            data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SERVERTIMING_TYPE +
+            if (e.serverTiming.length) {
+                data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SERVERTIMING_TYPE +
                 e.serverTiming.reduce(function(stData, entry, entryIndex) { /* eslint no-loop-func:0 */
-                  var duration = String(entry.duration);
-                  if (duration.substring(0, 2) === "0.") {
+                    var duration = String(entry.duration);
+                    if (duration.substring(0, 2) === "0.") {
                     // lop off the leading 0
-                    duration = duration.substring(1);
-                  }
-                  var lookupKey = ResourceTimingCompression.identifyServerTimingEntry(
+                        duration = duration.substring(1);
+                    }
+                    var lookupKey = ResourceTimingCompression.identifyServerTimingEntry(
                       serverTiming.indexed[entry.name].index,
                       serverTiming.indexed[entry.name].descriptions[entry.description]);
-                  stData += (entryIndex > 0 ? "," : "") + duration + lookupKey;
-                  return stData;
+                    stData += (entryIndex > 0 ? "," : "") + duration + lookupKey;
+                    return stData;
                 }, "");
-          }
+            }
 
             url = this.trimUrl(e.name, this.trimUrls);
             url = this.reverseHostname(url);
@@ -847,8 +847,8 @@
         }
 
         return {
-          restiming: this.optimizeTrie(this.convertToTrie(results), true),
-          servertiming: serverTiming.lookup
+            restiming: this.optimizeTrie(this.convertToTrie(results), true),
+            servertiming: serverTiming.lookup
         };
     };
 
@@ -895,20 +895,20 @@
    * @param {Object} countCollector Per-beacon collection of counts
    * @param {Array} serverTimingEntries Server Timing Entries from a Resource Timing Entry
    */
-  ResourceTimingCompression.accumulateServerTimingEntries = function(countCollector, serverTimingEntries) {
-    (serverTimingEntries || []).forEach(function(entry) {
-      if (typeof countCollector[entry.name] === "undefined") {
-        countCollector[entry.name] = {
-          count: 0,
-          counts: {}
-        };
-      }
-      var metric = countCollector[entry.name];
-      metric.counts[entry.description] = metric.counts[entry.description] || 0;
-      metric.counts[entry.description]++;
-      metric.count++;
-    });
-  };
+    ResourceTimingCompression.accumulateServerTimingEntries = function(countCollector, serverTimingEntries) {
+        (serverTimingEntries || []).forEach(function(entry) {
+            if (typeof countCollector[entry.name] === "undefined") {
+                countCollector[entry.name] = {
+                    count: 0,
+                    counts: {}
+                };
+            }
+            var metric = countCollector[entry.name];
+            metric.counts[entry.description] = metric.counts[entry.description] || 0;
+            metric.counts[entry.description]++;
+            metric.count++;
+        });
+    };
 
   /**
    * Given our count collector of the format: {
@@ -939,22 +939,22 @@
    * @param {Object} countCollector Per-beacon collection of counts
    * @returns {Array} compressed lookup array
    */
-  ResourceTimingCompression.compressServerTiming = function(countCollector) {
-    return Object.keys(countCollector).sort(function(metric1, metric2) {
-      return countCollector[metric2].count - countCollector[metric1].count;
-    }).reduce(function(array, name) {
-      var sorted = Object.keys(countCollector[name].counts).sort(function(description1, description2) {
-        return countCollector[name].counts[description2] -
+    ResourceTimingCompression.compressServerTiming = function(countCollector) {
+        return Object.keys(countCollector).sort(function(metric1, metric2) {
+            return countCollector[metric2].count - countCollector[metric1].count;
+        }).reduce(function(array, name) {
+            var sorted = Object.keys(countCollector[name].counts).sort(function(description1, description2) {
+                return countCollector[name].counts[description2] -
             countCollector[name].counts[description1];
-      });
+            });
 
       /* eslint no-inline-comments:0 */
-      array.push(sorted.length === 1 && sorted[0] === "" ?
+            array.push(sorted.length === 1 && sorted[0] === "" ?
           name : // special case: no non-empty descriptions
           [name].concat(sorted));
-      return array;
-    }, []);
-  };
+            return array;
+        }, []);
+    };
 
   /**
    * Given our lookup of the format: [
@@ -981,29 +981,30 @@
    * @param {Array} lookup compressed lookup array
    * @returns {Object} indexed version of the compressed lookup array
    */
-  ResourceTimingCompression.indexServerTiming = function(lookup) {
-    return lookup.reduce(function(serverTimingIndex, compressedEntry, entryIndex) {
-      var name, descriptions;
-      if (Array.isArray(compressedEntry)) {
-        name = compressedEntry[0];
-        descriptions = compressedEntry.slice(1).reduce(function(descriptionCollector, description, descriptionIndex) {
-          descriptionCollector[description] = descriptionIndex;
-          return descriptionCollector;
-        }, {});
-      } else {
-        name = compressedEntry;
-        descriptions = {
-          "": 0
-        };
-      }
+    ResourceTimingCompression.indexServerTiming = function(lookup) {
+        return lookup.reduce(function(serverTimingIndex, compressedEntry, entryIndex) {
+            var name, descriptions;
+            if (Array.isArray(compressedEntry)) {
+                name = compressedEntry[0];
+                descriptions = compressedEntry.slice(1).reduce(
+                    function(descriptionCollector, description, descriptionIndex) {
+                        descriptionCollector[description] = descriptionIndex;
+                        return descriptionCollector;
+                    }, {});
+            } else {
+                name = compressedEntry;
+                descriptions = {
+                    "": 0
+                };
+            }
 
-      serverTimingIndex[name] = {
-        index: entryIndex,
-        descriptions: descriptions
-      };
-      return serverTimingIndex;
-    }, {});
-  };
+            serverTimingIndex[name] = {
+                index: entryIndex,
+                descriptions: descriptions
+            };
+            return serverTimingIndex;
+        }, {});
+    };
 
   /**
    * Given entryIndex and descriptionIndex, create the shorthand key into the lookup
@@ -1016,19 +1017,19 @@
    * @param {Integer} descriptionIndex index of the description
    * @returns {String} key into the compressed lookup
    */
-  ResourceTimingCompression.identifyServerTimingEntry = function(entryIndex, descriptionIndex) {
-    var s = "";
-    if (entryIndex) {
-      s += entryIndex;
-    }
-    if (descriptionIndex) {
-      s += "." + descriptionIndex;
-    }
-    if (s.length) {
-      s = ":" + s;
-    }
-    return s;
-  };
+    ResourceTimingCompression.identifyServerTimingEntry = function(entryIndex, descriptionIndex) {
+        var s = "";
+        if (entryIndex) {
+            s += entryIndex;
+        }
+        if (descriptionIndex) {
+            s += "." + descriptionIndex;
+        }
+        if (s.length) {
+            s = ":" + s;
+        }
+        return s;
+    };
 
     //
     // Export to the appropriate location

@@ -352,113 +352,113 @@
             });
         });
 
-      describe("accumulateServerTimingEntries()", function() {
-        it("Should increment our count collector", function() {
-          var serverTimingCollection = {};
-          ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{name: "n1", description: "d1"}, {name: "n2", description: "d1"}]);
-          ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{name: "n2", description: "d1"}, {name: "n2", description: "d2"}]);
+        describe("accumulateServerTimingEntries()", function() {
+            it("Should increment our count collector", function() {
+                var serverTimingCollection = {};
+                ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{name: "n1", description: "d1"}, {name: "n2", description: "d1"}]);
+                ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{name: "n2", description: "d1"}, {name: "n2", description: "d2"}]);
 
-          expect(serverTimingCollection).to.eql({
-            n1: {
-              count: 1,
-              counts: {
-                d1: 1
-              }
-            },
-            n2: {
-              count: 3,
-              counts: {
-                d1: 2,
-                d2: 1
-              }
-            }
-          });
+                expect(serverTimingCollection).to.eql({
+                    n1: {
+                        count: 1,
+                        counts: {
+                            d1: 1
+                        }
+                    },
+                    n2: {
+                        count: 3,
+                        counts: {
+                            d1: 2,
+                            d2: 1
+                        }
+                    }
+                });
+            });
         });
-      });
 
-      describe("compressServerTiming", function() {
-        it("Should create a lookup from our count collector", function() {
-          expect(ResourceTimingCompression.compressServerTiming({
-            m0: {
-              count: 0,
-              counts: {}
-            },
-            m1: {
-              count: 1,
-              counts: {
-                d1: 1
-              }
-            }, m2: {
-              count: 5,
-              counts: {
-                d2a: 3,
-                d2b: 2
-              }
-            }
-          })).to.eql([
+        describe("compressServerTiming", function() {
+            it("Should create a lookup from our count collector", function() {
+                expect(ResourceTimingCompression.compressServerTiming({
+                    m0: {
+                        count: 0,
+                        counts: {}
+                    },
+                    m1: {
+                        count: 1,
+                        counts: {
+                            d1: 1
+                        }
+                    }, m2: {
+                        count: 5,
+                        counts: {
+                            d2a: 3,
+                            d2b: 2
+                        }
+                    }
+                })).to.eql([
             ["m2", "d2a", "d2b"],
             ["m1", "d1"],
             ["m0"]
-          ]);
+                ]);
+            });
+            it("Should special case exactly one empty description", function() {
+                expect(ResourceTimingCompression.compressServerTiming({
+                    m0: {
+                        count: 1,
+                        counts: {
+                            "": 1
+                        }
+                    }
+                })).to.eql([
+                    "m0"
+                ]);
+            });
         });
-        it("Should special case exactly one empty description", function() {
-          expect(ResourceTimingCompression.compressServerTiming({
-            m0: {
-              count: 1,
-              counts: {
-                "": 1
-              }
-            }
-          })).to.eql([
-            "m0"
-          ]);
-        });
-      });
 
-      describe("indexServerTiming", function() {
-        it("Should index a lookup", function() {
-          expect(ResourceTimingCompression.indexServerTiming([
+        describe("indexServerTiming", function() {
+            it("Should index a lookup", function() {
+                expect(ResourceTimingCompression.indexServerTiming([
             ["metric0", "d1"],
             ["metric1", "d2a", "d2b"]
-          ])).to.eql({
-            metric0: {
-              index: 0,
-              descriptions: {
-                d1: 0
-              }
-            },
-            metric1: {
-              index: 1,
-              descriptions: {
-                d2a: 0,
-                d2b: 1
-              }
-            }
-          });
+                ])).to.eql({
+                    metric0: {
+                        index: 0,
+                        descriptions: {
+                            d1: 0
+                        }
+                    },
+                    metric1: {
+                        index: 1,
+                        descriptions: {
+                            d2a: 0,
+                            d2b: 1
+                        }
+                    }
+                });
+            });
+
+            it("Should special case exactly one empty description", function() {
+                expect(ResourceTimingCompression.indexServerTiming([
+                    "metric0"
+                ])).to.eql({
+                    metric0: {
+                        index: 0,
+                        descriptions: {
+                            "": 0
+                        }
+                    }
+                });
+            });
         });
 
-        it("Should special case exactly one empty description", function() {
-          expect(ResourceTimingCompression.indexServerTiming([
-            "metric0"
-          ])).to.eql({
-            metric0: {
-              index: 0,
-              descriptions: {
-                "": 0
-              }
-            }
-          });
+        describe("identifyServerTimingEntry", function() {
+            it("Should create identifiers", function() {
+                expect(ResourceTimingCompression.identifyServerTimingEntry(0, 0)).to.eql("");
+                expect(ResourceTimingCompression.identifyServerTimingEntry(0, 1)).to.eql(":.1");
+                expect(ResourceTimingCompression.identifyServerTimingEntry(1, 0)).to.eql(":1");
+                expect(ResourceTimingCompression.identifyServerTimingEntry(1, 1)).to.eql(":1.1");
+            });
         });
-      });
-
-      describe("identifyServerTimingEntry", function() {
-        it("Should create identifiers", function() {
-          expect(ResourceTimingCompression.identifyServerTimingEntry(0, 0)).to.eql("");
-          expect(ResourceTimingCompression.identifyServerTimingEntry(0, 1)).to.eql(":.1");
-          expect(ResourceTimingCompression.identifyServerTimingEntry(1, 0)).to.eql(":1");
-          expect(ResourceTimingCompression.identifyServerTimingEntry(1, 1)).to.eql(":1.1");
-        });
-      });
 
     });
 }(typeof window !== "undefined" ? window : undefined));
