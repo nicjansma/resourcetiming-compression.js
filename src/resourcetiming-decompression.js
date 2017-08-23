@@ -755,6 +755,8 @@
     };
 
   /**
+   * Decompress a list of compressed server timing entries for a resource
+   *
    * @param {array} lookup server timing entries lookup
    * @param {string} compressedList server timing entries for a resource
    * @param {ResourceTiming} resource ResourceTiming object.
@@ -762,15 +764,16 @@
    */
     ResourceTimingDecompression.decompressServerTimingEntries = function(lookup, compressedList, resource) {
         if (lookup && compressedList) {
-            resource.serverTiming = compressedList.split(",").map(
-        function(compressedEntry) {
-            return this.decompressServerTiming(lookup, compressedEntry);
-        }, this);
+            resource.serverTiming = compressedList.split(",").map(function(compressedEntry) {
+                return this.decompressServerTiming(lookup, compressedEntry);
+            }, this);
         }
         return resource;
     };
 
   /**
+   * Decompress a compressed server timing entry for a resource
+   *
    * @param {array} lookup server timing entries lookup
    * @param {string} key key into the lookup for one server timing entry
    * @returns {object} server timing entry

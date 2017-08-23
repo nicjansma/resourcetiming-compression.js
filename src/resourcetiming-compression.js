@@ -424,13 +424,15 @@
                     connectEnd: t.connectEnd ? (t.connectEnd + offset) : 0,
                     requestStart: t.requestStart ? (t.requestStart + offset) : 0,
                     responseStart: t.responseStart ? (t.responseStart + offset) : 0,
-                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0,
-                    serverTiming: t.serverTiming || []
+                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0
                 };
                 if (t.encodedBodySize || t.decodedBodySize || t.transferSize) {
                     rtEntry.encodedBodySize = t.encodedBodySize;
                     rtEntry.decodedBodySize = t.decodedBodySize;
                     rtEntry.transferSize = t.transferSize;
+                }
+                if (t.serverTiming && t.serverTiming.length) {
+                    rtEntry.serverTiming = t.serverTiming;
                 }
                 frameFixedEntries.push(rtEntry);
             }
@@ -805,7 +807,7 @@
                 data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE + compSize;
             }
 
-            if (e.serverTiming.length) {
+            if (e.serverTiming && e.serverTiming.length) {
                 data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SERVERTIMING_TYPE +
                 e.serverTiming.reduce(function(stData, entry, entryIndex) { /* eslint no-loop-func:0 */
                     var duration = String(entry.duration);
