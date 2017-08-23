@@ -521,7 +521,7 @@
             }
         });
 
-      return entries;
+        return entries;
     };
 
     /**
@@ -619,48 +619,48 @@
      * @returns {string} Compressed data (or empty string, if not available)
      */
     ResourceTimingCompression.compressSize = function(resource) {
-      var sTrans, sEnc, sDec, sizes;
+        var sTrans, sEnc, sDec, sizes;
 
-      // check to see if we can add content sizes
-      if (resource.encodedBodySize ||
-          resource.decodedBodySize ||
-          resource.transferSize) {
-          //
-          // transferSize: the size of the fetched resource ("over the wire"), including the response header fields and
-          // the response payload body. It can be 0 in the case of X-O, or if it was fetched from a cache.
-          //
-          // encodedBodySize: the size of the response payload body after applying encoding (e.g. gzipped size).  It is
-          // 0 if X-O.
-          //
-          // decodedBodySize: the size of response payload body after removing encoding (e.g. the original content
-          // size). It is 0 if X-O.
-          //
-          // Here are the possible combinations of values: [encodedBodySize, transferSize, decodedBodySize]
-          //
-          // Cross-Origin resources w/out Timing-Allow-Origin set: [0, 0, 0] -> [0, 0, 0] -> [empty]
-          // 204: [0, t, 0] -> [0, t, 0] -> [e, t-e] -> [, t]
-          // 304: [e, t: t <=> e, d: d>=e] -> [e, t-e, d-e]
-          // 200 non-gzipped: [e, t: t>=e, d: d=e] -> [e, t-e]
-          // 200 gzipped: [e, t: t>=e, d: d>=e] -> [e, t-e, d-e]
-          // retrieved from cache non-gzipped: [e, 0, d: d=e] -> [e]
-          // retrieved from cache gzipped: [e, 0, d: d>=e] -> [e, _, d-e]
-          //
-          sTrans = resource.transferSize;
-          sEnc = resource.encodedBodySize;
-          sDec = resource.decodedBodySize;
+        // check to see if we can add content sizes
+        if (resource.encodedBodySize ||
+            resource.decodedBodySize ||
+            resource.transferSize) {
+            //
+            // transferSize: the size of the fetched resource ("over the wire"), including the response header fields
+            // and the response payload body. It can be 0 in the case of X-O, or if it was fetched from a cache.
+            //
+            // encodedBodySize: the size of the response payload body after applying encoding (e.g. gzipped size).  It
+            // is 0 if X-O.
+            //
+            // decodedBodySize: the size of response payload body after removing encoding (e.g. the original content
+            // size). It is 0 if X-O.
+            //
+            // Here are the possible combinations of values: [encodedBodySize, transferSize, decodedBodySize]
+            //
+            // Cross-Origin resources w/out Timing-Allow-Origin set: [0, 0, 0] -> [0, 0, 0] -> [empty]
+            // 204: [0, t, 0] -> [0, t, 0] -> [e, t-e] -> [, t]
+            // 304: [e, t: t <=> e, d: d>=e] -> [e, t-e, d-e]
+            // 200 non-gzipped: [e, t: t>=e, d: d=e] -> [e, t-e]
+            // 200 gzipped: [e, t: t>=e, d: d>=e] -> [e, t-e, d-e]
+            // retrieved from cache non-gzipped: [e, 0, d: d=e] -> [e]
+            // retrieved from cache gzipped: [e, 0, d: d>=e] -> [e, _, d-e]
+            //
+            sTrans = resource.transferSize;
+            sEnc = resource.encodedBodySize;
+            sDec = resource.decodedBodySize;
 
-          // convert to an array
-          sizes = [
-            sEnc,
-            sTrans ? sTrans - sEnc : "_",
-            sDec - sEnc
-          ];
+            // convert to an array
+            sizes = [
+                sEnc,
+                sTrans ? sTrans - sEnc : "_",
+                sDec - sEnc
+            ];
 
-          // change everything to base36 and remove any trailing ,s
-          return sizes.map(this.toBase36).join(",").replace(/,+$/, "");
-      } else {
-          return "";
-      }
+            // change everything to base36 and remove any trailing ,s
+            return sizes.map(this.toBase36).join(",").replace(/,+$/, "");
+        } else {
+            return "";
+        }
     };
 
     /* Cleans up a URL by removing the query string (if configured), and
@@ -689,7 +689,7 @@
             }
         }
 
-      return url;
+        return url;
     };
 
     /**
@@ -840,7 +840,7 @@
                         visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
                         + "|"
                         + data;
-                  } else {
+                } else {
                     results[url] = data;
                 }
             }

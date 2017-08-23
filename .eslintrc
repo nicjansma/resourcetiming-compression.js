@@ -102,6 +102,7 @@
         "no-unused-labels": 2,
         "no-useless-constructor": 2,
         "no-whitespace-before-property": 2,
+        "indent": ["error", 4],
 
         //
         // Disabled

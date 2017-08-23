@@ -34,29 +34,29 @@
     });
 
     gulp.task("mocha", function() {
-            return gulp.src("test/test-*.js",
-                {
-                    read: false
-                })
-                .pipe(mocha());
-        });
-
-        gulp.task("mocha-tap", ["mocha"], function() {
-            return gulp.src("test/test-*.js",
-                {
-                    read: false
-                })
-            .pipe(mocha({
-                    reporter: "tap",
-                    output: "./test/mocha.tap"
-            }));
+        return gulp.src("test/test-*.js",
+            {
+                read: false
+            })
+            .pipe(mocha());
     });
 
-        gulp.task("karma", ["mocha", "mocha-tap"], function(done) {
-            new Server({
-                configFile: path.join(__dirname, "karma.config.js"),
-                singleRun: true
-            }, done).start();
+    gulp.task("mocha-tap", ["mocha"], function() {
+        return gulp.src("test/test-*.js",
+            {
+                read: false
+            })
+        .pipe(mocha({
+            reporter: "tap",
+            output: "./test/mocha.tap"
+        }));
+    });
+
+    gulp.task("karma", ["mocha", "mocha-tap"], function(done) {
+        new Server({
+            configFile: path.join(__dirname, "karma.config.js"),
+            singleRun: true
+        }, done).start();
     });
 
     gulp.task("all", ["default"]);
