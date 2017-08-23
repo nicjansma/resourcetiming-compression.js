@@ -193,6 +193,50 @@ ResourceTimingDecompression.addContribution(original);
 // Resources in "original" now have a field "contribution".
 ```
 
+## Server Timing
+Server-timing entries are included on resource- and navigation-timing entries as `serverTiming`. They must have a `name`, _might_ have a non-empty `description`, and will likely have a non-zero `duration`. This compression is build on the presumption that resources will have server timing entries with unique `duration`s pointing mostly to the same `name` and `description`s. There are two parts to this compression:
+1) a "lookup" data structure containing all of the unique `name` and `description` pairs (an array of arrays, sorted with most-common first)
+2) for each resource timing entry, a list of duration and key pairs, where duration is the `duration` of the server timing entry and the key maps to the name and description in 1)
+
+Take the following example:
+```javascript
+performance.getEntriesByName(<path/to/resource1>)[0].serverTiming === [{
+  name: 'm1',
+  duration: 1,
+  description: 'desc1'
+}, {
+  name: 'm2',
+  duration: 2,
+  description: 'desc3'
+}]
+
+performance.getEntriesByName(<path/to/resource2>)[0].serverTiming === [{
+  name: 'm1',
+  duration: 3,
+  description: 'desc1'
+}, {
+  name: 'm1',
+  duration: 4,
+  description: 'desc2'
+}]
+
+```
+* `getResourceTiming()` will return a `servertiming` "lookup" will all of the unique pairs of name and description, equal to:
+```
+[[m1, desc1, desc2], [m2, desc3]]
+```
+
+* We supplement the compressed resource timing data with comma-separated list of the form: `<duration>:<entryIndex>.<descriptionIndex>`.
+  * For "resource1", we add: `1:0.0,2:1.0`
+  * For "resource2", we add: `3:0.0,4:0.1`
+
+* To save bytes, we will omit the zeroes, and irrelevant separators. So, from our example:
+  * For "resource1", we add: `1,2:1`
+  * For "resource2", we add: `3,4:.1`
+
+* And lastly, were there only one `description` for a given `name` and it was empty-string, then we simplify that array entry:
+`[["description1", ""], ...]` would become `["description1", ...]`
+
 ## Tests
 
 ### resourcetiming-compression.js tests
