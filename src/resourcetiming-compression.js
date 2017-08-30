@@ -76,6 +76,9 @@
     // Dimension data special type
     var SPECIAL_DATA_SIZE_TYPE = "1";
 
+    // Dimension data special type
+    var SPECIAL_DATA_SERVERTIMING_TYPE = "3";
+
     // Regular Expression to parse a URL
     var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
 
@@ -364,7 +367,8 @@
                         connectEnd: navEntry.connectEnd,
                         requestStart: navEntry.requestStart,
                         responseStart: navEntry.responseStart,
-                        responseEnd: navEntry.responseEnd
+                        responseEnd: navEntry.responseEnd,
+                        serverTiming: navEntry.serverTiming || []
                     });
                 } else if (frame.performance.timing) {
                     // add a fake entry from the timing object
@@ -426,6 +430,9 @@
                     rtEntry.encodedBodySize = t.encodedBodySize;
                     rtEntry.decodedBodySize = t.decodedBodySize;
                     rtEntry.transferSize = t.transferSize;
+                }
+                if (t.serverTiming && t.serverTiming.length) {
+                    rtEntry.serverTiming = t.serverTiming;
                 }
                 frameFixedEntries.push(rtEntry);
             }
@@ -553,11 +560,13 @@
      */
     ResourceTimingCompression.getFilteredResourceTiming = function(win, from, to, initiatorTypes) {
         var entries = this.findPerformanceEntriesForFrame(win, true, 0, 0),
-            i, e, results = {}, initiatorType, url, data,
-            navStart = this.getNavStartTime(win);
+            i, e,
+            navStart = this.getNavStartTime(win), countCollector = {};
 
         if (!entries || !entries.length) {
-            return [];
+            return {
+                entries: []
+            };
         }
 
         var filteredEntries = [];
@@ -590,16 +599,24 @@
                 }
             }
 
+            ResourceTimingCompression.accumulateServerTimingEntries(countCollector, e.serverTiming);
             filteredEntries.push(e);
         }
 
-        return filteredEntries;
+        var lookup = ResourceTimingCompression.compressServerTiming(countCollector);
+        return {
+            entries: filteredEntries,
+            serverTiming: {
+                lookup: lookup,
+                indexed: ResourceTimingCompression.indexServerTiming(lookup)
+            }
+        };
     };
 
     /**
      * Gets compressed content and transfer size information, if available
      *
-     * @param {ResourceTiming} resource ResourceTiming bject
+     * @param {ResourceTiming} resource ResourceTiming object
      *
      * @returns {string} Compressed data (or empty string, if not available)
      */
@@ -725,22 +742,24 @@
             win = window;
         }
 
-        var entries = ResourceTimingCompression.getFilteredResourceTiming(win, from, to);
+        var ret = ResourceTimingCompression.getFilteredResourceTiming(win, from, to);
+        var entries = ret.entries, serverTiming = ret.serverTiming;
 
         if (!entries || !entries.length) {
             return {};
         }
 
-        return ResourceTimingCompression.compressResourceTiming(win, entries);
+        return ResourceTimingCompression.compressResourceTiming(win, entries, serverTiming);
     };
 
     /**
      * Optimizes the specified set of performance entries.
      * @param {Window} win The Window
      * @param {object} entries Performance entries
+     * @param {object} serverTiming object containing `lookup` and `indexed`
      * @returns {object} Optimized performance entries trie
      */
-    ResourceTimingCompression.compressResourceTiming = function(win, entries) {
+    ResourceTimingCompression.compressResourceTiming = function(win, entries, serverTiming) {
         /* eslint no-script-url:0 */
         var i, e, results = {}, initiatorType, url, data, visibleEntries = {};
 
@@ -788,6 +807,22 @@
                 data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE + compSize;
             }
 
+            if (e.serverTiming && e.serverTiming.length) {
+                data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SERVERTIMING_TYPE +
+                e.serverTiming.reduce(function(stData, entry, entryIndex) { /* eslint no-loop-func:0 */
+                    var duration = String(entry.duration);
+                    if (duration.substring(0, 2) === "0.") {
+                    // lop off the leading 0
+                        duration = duration.substring(1);
+                    }
+                    var lookupKey = ResourceTimingCompression.identifyServerTimingEntry(
+                      serverTiming.indexed[entry.name].index,
+                      serverTiming.indexed[entry.name].descriptions[entry.description]);
+                    stData += (entryIndex > 0 ? "," : "") + duration + lookupKey;
+                    return stData;
+                }, "");
+            }
+
             url = this.trimUrl(e.name, this.trimUrls);
             url = this.reverseHostname(url);
 
@@ -813,7 +848,10 @@
             }
         }
 
-        return this.optimizeTrie(this.convertToTrie(results), true);
+        return {
+            restiming: this.optimizeTrie(this.convertToTrie(results), true),
+            servertiming: serverTiming.lookup
+        };
     };
 
     /**
@@ -842,6 +880,157 @@
             o += i[l];
         }
         return o;
+    };
+
+  /**
+   * Given an array of server timing entries (from the resource timing entry),
+   * [initialize and] increment our count collector of the following format: {
+	 *   "metric-one": {
+	 *     count: 3,
+	 *     counts: {
+	 *       "description-one": 2,
+	 *       "description-two": 1,
+	 *     }
+	 *   }
+	 * }
+   *
+   * @param {Object} countCollector Per-beacon collection of counts
+   * @param {Array} serverTimingEntries Server Timing Entries from a Resource Timing Entry
+   */
+    ResourceTimingCompression.accumulateServerTimingEntries = function(countCollector, serverTimingEntries) {
+        (serverTimingEntries || []).forEach(function(entry) {
+            if (typeof countCollector[entry.name] === "undefined") {
+                countCollector[entry.name] = {
+                    count: 0,
+                    counts: {}
+                };
+            }
+            var metric = countCollector[entry.name];
+            metric.counts[entry.description] = metric.counts[entry.description] || 0;
+            metric.counts[entry.description]++;
+            metric.count++;
+        });
+    };
+
+  /**
+   * Given our count collector of the format: {
+	 *   "metric-two": {
+	 *     count: 1,
+	 *     counts: {
+	 *       "description-three": 1,
+	 *     }
+	 *   },
+	 *   "metric-one": {
+	 *     count: 3,
+	 *     counts: {
+	 *       "description-one": 1,
+	 *       "description-two": 2,
+	 *     }
+	 *   }
+	 * }
+   *
+   * , return the lookup of the following format: [
+   *   ["metric-one", "description-two", "description-one"],
+   *   ["metric-two", "description-three"],
+   * ]
+   *
+   * Note: The order of these arrays of arrays matters: there are more server timing entries with
+   * name === "metric-one" than "metric-two", and more "metric-one"/"description-two" than
+   * "metric-one"/"description-one".
+   *
+   * @param {Object} countCollector Per-beacon collection of counts
+   * @returns {Array} compressed lookup array
+   */
+    ResourceTimingCompression.compressServerTiming = function(countCollector) {
+        return Object.keys(countCollector).sort(function(metric1, metric2) {
+            return countCollector[metric2].count - countCollector[metric1].count;
+        }).reduce(function(array, name) {
+            var sorted = Object.keys(countCollector[name].counts).sort(function(description1, description2) {
+                return countCollector[name].counts[description2] -
+            countCollector[name].counts[description1];
+            });
+
+      /* eslint no-inline-comments:0 */
+            array.push(sorted.length === 1 && sorted[0] === "" ?
+          name : // special case: no non-empty descriptions
+          [name].concat(sorted));
+            return array;
+        }, []);
+    };
+
+  /**
+   * Given our lookup of the format: [
+   *   ["metric-one", "description-one", "description-two"],
+   *   ["metric-two", "description-three"],
+   * ]
+   *
+   * , create a O(1) name/description to index values lookup dictionary of the format: {
+	 *   metric-one: {
+	 *     index: 0,
+	 *     descriptions: {
+	 *       "description-one": 0,
+	 *       "description-two": 1,
+	 *     }
+	 *   }
+	 *   metric-two: {
+	 *     index: 1,
+	 *     descriptions: {
+	 *       "description-three": 0,
+	 *     }
+	 *   }
+	 * }
+   *
+   * @param {Array} lookup compressed lookup array
+   * @returns {Object} indexed version of the compressed lookup array
+   */
+    ResourceTimingCompression.indexServerTiming = function(lookup) {
+        return lookup.reduce(function(serverTimingIndex, compressedEntry, entryIndex) {
+            var name, descriptions;
+            if (Array.isArray(compressedEntry)) {
+                name = compressedEntry[0];
+                descriptions = compressedEntry.slice(1).reduce(
+                    function(descriptionCollector, description, descriptionIndex) {
+                        descriptionCollector[description] = descriptionIndex;
+                        return descriptionCollector;
+                    }, {});
+            } else {
+                name = compressedEntry;
+                descriptions = {
+                    "": 0
+                };
+            }
+
+            serverTimingIndex[name] = {
+                index: entryIndex,
+                descriptions: descriptions
+            };
+            return serverTimingIndex;
+        }, {});
+    };
+
+  /**
+   * Given entryIndex and descriptionIndex, create the shorthand key into the lookup
+   * response format is ":<entryIndex>.<descriptionIndex>"
+   * either/both entryIndex or/and descriptionIndex can be omitted if equal to 0
+   * the "." can be ommited if descriptionIndex is 0
+   * the ":" can be ommited if entryIndex and descriptionIndex are 0
+   *
+   * @param {Integer} entryIndex index of the entry
+   * @param {Integer} descriptionIndex index of the description
+   * @returns {String} key into the compressed lookup
+   */
+    ResourceTimingCompression.identifyServerTimingEntry = function(entryIndex, descriptionIndex) {
+        var s = "";
+        if (entryIndex) {
+            s += entryIndex;
+        }
+        if (descriptionIndex) {
+            s += "." + descriptionIndex;
+        }
+        if (s.length) {
+            s = ":" + s;
+        }
+        return s;
     };
 
     //
