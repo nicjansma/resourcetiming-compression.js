@@ -149,12 +149,12 @@
     };
 
     /**
-    * Returns a map with key/value pairs reversed.
-    *
-    * @param {object} origMap Map we want to reverse.
-    *
-    * @returns {object} New map with reversed mappings.
-    */
+     * Returns a map with key/value pairs reversed.
+     *
+     * @param {object} origMap Map we want to reverse.
+     *
+     * @returns {object} New map with reversed mappings.
+     */
     ResourceTimingDecompression.getRevMap = function(origMap) {
         var revMap = {};
         for (var key in origMap) {
@@ -166,14 +166,14 @@
     };
 
     /**
-    * Reverse initiator type map
-    */
+     * Reverse initiator type map
+     */
     ResourceTimingDecompression.REV_INITIATOR_TYPES = ResourceTimingDecompression.
         getRevMap(ResourceTimingDecompression.INITIATOR_TYPES);
 
     /**
-    * Reverse dimension name map
-    */
+     * Reverse dimension name map
+     */
     ResourceTimingDecompression.REV_DIMENSION_NAMES = ResourceTimingDecompression.
         getRevMap(ResourceTimingDecompression.DIMENSION_NAMES);
 
@@ -281,25 +281,25 @@
         return resources;
     };
 
-    /*
-    * Checks that the input contains dimension information.
-    *
-    * @param {string} resourceData The string we want to check.
-    *
-    * @returns boolean True if resourceData starts with SPECIAL_DATA_DIMENSION_PREFIX, false otherwise.
-    */
+    /**
+     * Checks that the input contains dimension information.
+     *
+     * @param {string} resourceData The string we want to check.
+     *
+     * @returns {boolean} True if resourceData starts with SPECIAL_DATA_DIMENSION_PREFIX, false otherwise.
+     */
     ResourceTimingDecompression.isDimensionData = function(resourceData) {
         return resourceData &&
             resourceData.substring(0, SPECIAL_DATA_DIMENSION_PREFIX.length) === SPECIAL_DATA_DIMENSION_PREFIX;
     };
 
     /**
-    * Extract height, width, y and x from a string.
-    *
-    * @param {string} resourceData A string containing dimension data.
-    *
-    * @returns {object} Dimension data with keys defined by DIMENSION_NAMES.
-    */
+     * Extract height, width, y and x from a string.
+     *
+     * @param {string} resourceData A string containing dimension data.
+     *
+     * @returns {object} Dimension data with keys defined by DIMENSION_NAMES.
+     */
     ResourceTimingDecompression.decompressDimension = function(resourceData) {
         var dimensions, i;
         var dimensionData = {};
@@ -332,13 +332,13 @@
     };
 
     /**
-    * Adds dimension data to the given resource.
-    *
-    * @param {object} resource The resource we want to edit.
-    * @param {object} dimensionData The dimension data we want to add.
-    *
-    * @returns {object} The resource with added dimensions.
-    */
+     * Adds dimension data to the given resource.
+     *
+     * @param {object} resource The resource we want to edit.
+     * @param {object} dimensionData The dimension data we want to add.
+     *
+     * @returns {object} The resource with added dimensions.
+     */
     ResourceTimingDecompression.addDimension = function(resource, dimensionData) {
         // If the resource or data are not defined, do nothing.
         if (!resource || !dimensionData) {
@@ -754,14 +754,14 @@
         return o;
     };
 
-  /**
-   * Decompress a list of compressed server timing entries for a resource
-   *
-   * @param {array} lookup server timing entries lookup
-   * @param {string} compressedList server timing entries for a resource
-   * @param {ResourceTiming} resource ResourceTiming object.
-   * @returns {ResourceTiming} ResourceTiming object with decompressed server timing entries.
-   */
+    /**
+     * Decompress a list of compressed server timing entries for a resource
+     *
+     * @param {array} lookup server timing entries lookup
+     * @param {string} compressedList server timing entries for a resource
+     * @param {ResourceTiming} resource ResourceTiming object.
+     * @returns {ResourceTiming} ResourceTiming object with decompressed server timing entries.
+     */
     ResourceTimingDecompression.decompressServerTimingEntries = function(lookup, compressedList, resource) {
         if (typeof resource === "undefined") {
             resource = {};
@@ -775,13 +775,13 @@
         return resource;
     };
 
-  /**
-   * Decompress a compressed server timing entry for a resource
-   *
-   * @param {array} lookup server timing entries lookup
-   * @param {string} key key into the lookup for one server timing entry
-   * @returns {object} server timing entry
-   */
+    /**
+     * Decompress a compressed server timing entry for a resource
+     *
+     * @param {array} lookup server timing entries lookup
+     * @param {string} key key into the lookup for one server timing entry
+     * @returns {object} server timing entry
+     */
     ResourceTimingDecompression.decompressServerTiming = function(lookup, key) {
         var split = key.split(":");
         var duration = Number(split[0]);

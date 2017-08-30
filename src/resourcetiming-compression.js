@@ -665,7 +665,8 @@
         }
     };
 
-    /* Cleans up a URL by removing the query string (if configured), and
+    /**
+     * Cleans up a URL by removing the query string (if configured), and
      * limits the URL to the specified size.
      *
      * @param {string} url URL to clean
@@ -882,21 +883,21 @@
         return o;
     };
 
-  /**
-   * Given an array of server timing entries (from the resource timing entry),
-   * [initialize and] increment our count collector of the following format: {
-	 *   "metric-one": {
-	 *     count: 3,
-	 *     counts: {
-	 *       "description-one": 2,
-	 *       "description-two": 1,
-	 *     }
-	 *   }
-	 * }
-   *
-   * @param {Object} countCollector Per-beacon collection of counts
-   * @param {Array} serverTimingEntries Server Timing Entries from a Resource Timing Entry
-   */
+    /**
+     * Given an array of server timing entries (from the resource timing entry),
+     * [initialize and] increment our count collector of the following format: {
+     *   "metric-one": {
+     *     count: 3,
+     *     counts: {
+     *       "description-one": 2,
+     *       "description-two": 1,
+     *     }
+     *   }
+     * }
+     *
+     * @param {Object} countCollector Per-beacon collection of counts
+     * @param {Array} serverTimingEntries Server Timing Entries from a Resource Timing Entry
+     */
     ResourceTimingCompression.accumulateServerTimingEntries = function(countCollector, serverTimingEntries) {
         (serverTimingEntries || []).forEach(function(entry) {
             if (typeof countCollector[entry.name] === "undefined") {
@@ -912,35 +913,35 @@
         });
     };
 
-  /**
-   * Given our count collector of the format: {
-	 *   "metric-two": {
-	 *     count: 1,
-	 *     counts: {
-	 *       "description-three": 1,
-	 *     }
-	 *   },
-	 *   "metric-one": {
-	 *     count: 3,
-	 *     counts: {
-	 *       "description-one": 1,
-	 *       "description-two": 2,
-	 *     }
-	 *   }
-	 * }
-   *
-   * , return the lookup of the following format: [
-   *   ["metric-one", "description-two", "description-one"],
-   *   ["metric-two", "description-three"],
-   * ]
-   *
-   * Note: The order of these arrays of arrays matters: there are more server timing entries with
-   * name === "metric-one" than "metric-two", and more "metric-one"/"description-two" than
-   * "metric-one"/"description-one".
-   *
-   * @param {Object} countCollector Per-beacon collection of counts
-   * @returns {Array} compressed lookup array
-   */
+    /**
+     * Given our count collector of the format: {
+     *   "metric-two": {
+     *     count: 1,
+     *     counts: {
+     *       "description-three": 1,
+     *     }
+     *   },
+     *   "metric-one": {
+     *     count: 3,
+     *     counts: {
+     *       "description-one": 1,
+     *       "description-two": 2,
+     *     }
+     *   }
+     * }
+     *
+     * , return the lookup of the following format: [
+     *   ["metric-one", "description-two", "description-one"],
+     *   ["metric-two", "description-three"],
+     * ]
+     *
+     * Note: The order of these arrays of arrays matters: there are more server timing entries with
+     * name === "metric-one" than "metric-two", and more "metric-one"/"description-two" than
+     * "metric-one"/"description-one".
+     *
+     * @param {Object} countCollector Per-beacon collection of counts
+     * @returns {Array} compressed lookup array
+     */
     ResourceTimingCompression.compressServerTiming = function(countCollector) {
         return Object.keys(countCollector).sort(function(metric1, metric2) {
             return countCollector[metric2].count - countCollector[metric1].count;
@@ -958,31 +959,31 @@
         }, []);
     };
 
-  /**
-   * Given our lookup of the format: [
-   *   ["metric-one", "description-one", "description-two"],
-   *   ["metric-two", "description-three"],
-   * ]
-   *
-   * , create a O(1) name/description to index values lookup dictionary of the format: {
-	 *   metric-one: {
-	 *     index: 0,
-	 *     descriptions: {
-	 *       "description-one": 0,
-	 *       "description-two": 1,
-	 *     }
-	 *   }
-	 *   metric-two: {
-	 *     index: 1,
-	 *     descriptions: {
-	 *       "description-three": 0,
-	 *     }
-	 *   }
-	 * }
-   *
-   * @param {Array} lookup compressed lookup array
-   * @returns {Object} indexed version of the compressed lookup array
-   */
+    /**
+     * Given our lookup of the format: [
+     *   ["metric-one", "description-one", "description-two"],
+     *   ["metric-two", "description-three"],
+     * ]
+     *
+     * , create a O(1) name/description to index values lookup dictionary of the format: {
+     *   metric-one: {
+     *     index: 0,
+     *     descriptions: {
+     *       "description-one": 0,
+     *       "description-two": 1,
+     *     }
+     *   }
+     *   metric-two: {
+     *     index: 1,
+     *     descriptions: {
+     *       "description-three": 0,
+     *     }
+     *   }
+     * }
+     *
+     * @param {Array} lookup compressed lookup array
+     * @returns {Object} indexed version of the compressed lookup array
+     */
     ResourceTimingCompression.indexServerTiming = function(lookup) {
         return lookup.reduce(function(serverTimingIndex, compressedEntry, entryIndex) {
             var name, descriptions;
@@ -1008,17 +1009,17 @@
         }, {});
     };
 
-  /**
-   * Given entryIndex and descriptionIndex, create the shorthand key into the lookup
-   * response format is ":<entryIndex>.<descriptionIndex>"
-   * either/both entryIndex or/and descriptionIndex can be omitted if equal to 0
-   * the "." can be ommited if descriptionIndex is 0
-   * the ":" can be ommited if entryIndex and descriptionIndex are 0
-   *
-   * @param {Integer} entryIndex index of the entry
-   * @param {Integer} descriptionIndex index of the description
-   * @returns {String} key into the compressed lookup
-   */
+    /**
+     * Given entryIndex and descriptionIndex, create the shorthand key into the lookup
+     * response format is ":<entryIndex>.<descriptionIndex>"
+     * either/both entryIndex or/and descriptionIndex can be omitted if equal to 0
+     * the "." can be ommited if descriptionIndex is 0
+     * the ":" can be ommited if entryIndex and descriptionIndex are 0
+     *
+     * @param {Integer} entryIndex index of the entry
+     * @param {Integer} descriptionIndex index of the description
+     * @returns {String} key into the compressed lookup
+     */
     ResourceTimingCompression.identifyServerTimingEntry = function(entryIndex, descriptionIndex) {
         var s = "";
         if (entryIndex) {
