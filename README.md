@@ -255,7 +255,7 @@ Or via ``gulp``:
 
 * v1.0.0 - 2017-08-29:
     * **Breaking Changes**:
-        * Reverses hostnames in Trie entries (#10) for better compression
+        * Reverses hostnames in Trie entries ([#10]) for better compression
         * `getResourceTiming()` now returns an object of `{ restiming, servertiming }`
             instead of just `restiming` (#17)
     * **New Features**:
@@ -268,31 +268,31 @@ Or via ``gulp``:
         * Fixes max IFRAME recursion depth of 10 (#9)
         * Fixes compression algorithm for gzipped zero-byte payloads (#14)
 * v0.3.4 - 2016-10-20:
-    * Better `src` attribute capture and HREF handling (3796c2ae3de087cad957d594ee3376fb694a6bee)
-    * Look at `rect.height|width` for dimensions (3796c2ae3de087cad957d594ee3376fb694a6bee)
+    * Better `src` attribute capture and HREF handling (3796c2ae)
+    * Look at `rect.height|width` for dimensions (3796c2ae)
 * v0.3.3 - 2016-10-20:
-    * Handle SVG:image elements (0177ee6ef4ad0bcd0d4b050deaeff4fd8d47c168)
+    * Handle SVG:image elements (0177ee6e)
 * v0.3.2 - 2016-10-20:
     * Decodes resource dimensions (#6)
 * v0.3.1 - 2016-07-15:
     * Fixed capturing of resource sizes (bytes) (#4)
 * v0.3.0 - 2016-07-11:
-    * Captures dimensions (px) of resources (d54d5be493620bac5ff17542e5209859d7094c8e)
-    * Captures resource sizes (bytes) from ResourceTiming2 (d54d5be493620bac5ff17542e5209859d7094c8e)
-    * Breaks certain URLs up slightly so they don't trigger XSS filters (d54d5be493620bac5ff17542e5209859d7094c8e)
-    * Limits URLs to 500 characters, and adds the ability to trim other URLs (d54d5be493620bac5ff17542e5209859d7094c8e)
-    * Don't go more than 10 IFRAMEs deep (to avoid recursion bugs) (d54d5be493620bac5ff17542e5209859d7094c8e)
-    * Fixes browser bugs with incorrect timings (d54d5be493620bac5ff17542e5209859d7094c8e)
+    * Captures dimensions (px) of resources (d54d5be4)
+    * Captures resource sizes (bytes) from ResourceTiming2 (d54d5be4)
+    * Breaks certain URLs up slightly so they don't trigger XSS filters (d54d5be4)
+    * Limits URLs to 500 characters, and adds the ability to trim other URLs (d54d5be4)
+    * Don't go more than 10 IFRAMEs deep (to avoid recursion bugs) (d54d5be4)
+    * Fixes browser bugs with incorrect timings (d54d5be4)
 * v0.2.2 - 2016-06-01:
-    * Add 'html' initiatorType for root page (91a91404aadbdb7892a4b2b4b8a4f08c0893301a)
+    * Add 'html' initiatorType for root page (91a91404)
 * v0.2.1 - 2016-04-04:
-    * Protect against X-O frame access that crashes some browsers (f48c1915a7191a88dbb21df61f73f92172577c2c)
+    * Protect against X-O frame access that crashes some browsers (f48c1915)
 * v0.2.0 - 2015-11-23:
     * Adds a CLI (#2)
-    * Export both ResourceTimingCompression and ResourceTimingDecompression from main module (567682b75478ecc89e34522e8c2c15c9ffa92d75)
+    * Export both ResourceTimingCompression and ResourceTimingDecompression from main module (567682b7)
 * v0.1.2 - 2015-02-25:
     * Fixed initiatorType parsing (#1)
 * v0.1.1 - 2015-02-13:
-    * Fixed how redirectStart and fetchStart are calculated (567682b75478ecc89e34522e8c2c15c9ffa92d75)
+    * Fixed how redirectStart and fetchStart are calculated (567682b7)
 * v0.1.0 - 2014-10-17:
     * Initial version
