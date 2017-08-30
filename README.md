@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v0.3.4
+v0.4.0
 
 [http://nicj.net](http://nicj.net)
 
@@ -194,9 +194,10 @@ ResourceTimingDecompression.addContribution(original);
 ```
 
 ## Server Timing
-Server-timing entries are included on resource- and navigation-timing entries as `serverTiming`. They must have a `name`, _might_ have a non-empty `description`, and will likely have a non-zero `duration`. This compression is build on the presumption that resources will have server timing entries with unique `duration`s pointing mostly to the same `name` and `description`s. There are two parts to this compression:
-1) a "lookup" data structure containing all of the unique `name` and `description` pairs (an array of arrays, sorted with most-common first)
-2) for each resource timing entry, a list of duration and key pairs, where duration is the `duration` of the server timing entry and the key maps to the name and description in 1)
+Server Timing entries are included on Resource- and NavigationTiming entries as `serverTiming`. They must have a `name`, _might_ have a non-empty `description`, and will likely have a non-zero `duration`. This compression is build on the presumption that resources will have server timing entries with unique `duration`s pointing mostly to the same `name` and `description`s. There are two parts to this compression:
+
+1. A "lookup" data structure containing all of the unique `name` and `description` pairs (an array of arrays, sorted with most-common first)
+2. For each resource timing entry, a list of duration and key pairs, where duration is the `duration` of the server timing entry and the key maps to the name and description in (1)
 
 Take the following example:
 ```javascript
@@ -221,21 +222,22 @@ performance.getEntriesByName(<path/to/resource2>)[0].serverTiming === [{
 }]
 
 ```
+
 * `getResourceTiming()` will return a `servertiming` "lookup" will all of the unique pairs of name and description, equal to:
-```
-[[m1, desc1, desc2], [m2, desc3]]
-```
+
+    `[[m1, desc1, desc2], [m2, desc3]]`
 
 * We supplement the compressed resource timing data with comma-separated list of the form: `<duration>:<entryIndex>.<descriptionIndex>`.
-  * For "resource1", we add: `1:0.0,2:1.0`
-  * For "resource2", we add: `3:0.0,4:0.1`
+    * For "resource1", we add: `1:0.0,2:1.0`
+    * For "resource2", we add: `3:0.0,4:0.1`
 
 * To save bytes, we will omit the zeroes, and irrelevant separators. So, from our example:
-  * For "resource1", we add: `1,2:1`
-  * For "resource2", we add: `3,4:.1`
+    * For "resource1", we add: `1,2:1`
+    * For "resource2", we add: `3,4:.1`
 
 * And lastly, were there only one `description` for a given `name` and it was empty-string, then we simplify that array entry:
-`[["description1", ""], ...]` would become `["description1", ...]`
+
+    `[["description1", ""], ...]` would become `["description1", ...]`
 
 ## Tests
 
@@ -251,22 +253,46 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.0.0 - 2017-08-29:
+    * **Breaking Changes**:
+        * Reverses hostnames in Trie entries (#10) for better compression
+        * `getResourceTiming()` now returns an object of `{ restiming, servertiming }`
+            instead of just `restiming` (#17)
+    * **New Features**:`
+        * Adds ServerTiming data if available (#17)
+        * Adds new initiator types (#15): `beacon`, `fetch`
+        * Resource contribution scores (#16)
+        * Adds `async`, `body` and `defer` flags for `SCRIPT` types (#16)
+        * Adds `naturalHeight` and `naturalWidth` for dimensions (#16)
+    * **Bug Fixes**:
+        * Fixes max IFRAME recursion depth of 10 (#9)
+        * Fixes compression algorithm for gzipped zero-byte payloads (#14)
 * v0.3.4 - 2016-10-20:
-    * Better `src` attribute capture and HREF handling
-    * Look at `rect.height|width` for dimensions
-* v0.3.3 - 2016-10-20: Handle SVG:image elements
-* v0.3.2 - 2016-10-20: Decodes resource dimensions
-* v0.3.1 - 2016-07-15: Fixed capturing of resource sizes (bytes)
+    * Better `src` attribute capture and HREF handling (3796c2ae3de087cad957d594ee3376fb694a6bee)
+    * Look at `rect.height|width` for dimensions (3796c2ae3de087cad957d594ee3376fb694a6bee)
+* v0.3.3 - 2016-10-20:
+    * Handle SVG:image elements (0177ee6ef4ad0bcd0d4b050deaeff4fd8d47c168)
+* v0.3.2 - 2016-10-20:
+    * Decodes resource dimensions (#6)
+* v0.3.1 - 2016-07-15:
+    * Fixed capturing of resource sizes (bytes) (#4)
 * v0.3.0 - 2016-07-11:
-    * Captures dimensions (px) of resources
-    * Captures resource sizes (bytes) from ResourceTiming2
-    * Breaks certain URLs up slightly so they don't trigger XSS filters
-    * Limits URLs to 500 characters, and adds the ability to trim other URLs
-    * Don't go more than 10 IFRAMEs deep (to avoid recursion bugs)
-    * Fixes browser bugs with incorrect timings
-* v0.2.2 - 2016-06-01: Add 'html' initiatorType for root page
-* v0.2.1 - 2016-04-04: Protect against X-O frame access that crashes some browsers
-* v0.2.0 - 2015-11-23: Export both ResourceTimingCompression and ResourceTimingDecompression from main module
-* v0.1.2 - 2015-02-25: Fixed initiatorType parsing
-* v0.1.1 - 2015-02-13: Fixed how redirectStart and fetchStart are calculated
-* v0.1.0 - 2014-10-17: Initial version
+    * Captures dimensions (px) of resources (d54d5be493620bac5ff17542e5209859d7094c8e)
+    * Captures resource sizes (bytes) from ResourceTiming2 (d54d5be493620bac5ff17542e5209859d7094c8e)
+    * Breaks certain URLs up slightly so they don't trigger XSS filters (d54d5be493620bac5ff17542e5209859d7094c8e)
+    * Limits URLs to 500 characters, and adds the ability to trim other URLs (d54d5be493620bac5ff17542e5209859d7094c8e)
+    * Don't go more than 10 IFRAMEs deep (to avoid recursion bugs) (d54d5be493620bac5ff17542e5209859d7094c8e)
+    * Fixes browser bugs with incorrect timings (d54d5be493620bac5ff17542e5209859d7094c8e)
+* v0.2.2 - 2016-06-01:
+    * Add 'html' initiatorType for root page (91a91404aadbdb7892a4b2b4b8a4f08c0893301a)
+* v0.2.1 - 2016-04-04:
+    * Protect against X-O frame access that crashes some browsers (f48c1915a7191a88dbb21df61f73f92172577c2c)
+* v0.2.0 - 2015-11-23:
+    * Adds a CLI (#2)
+    * Export both ResourceTimingCompression and ResourceTimingDecompression from main module (567682b75478ecc89e34522e8c2c15c9ffa92d75)
+* v0.1.2 - 2015-02-25:
+    * Fixed initiatorType parsing (#1)
+* v0.1.1 - 2015-02-13:
+    * Fixed how redirectStart and fetchStart are calculated (567682b75478ecc89e34522e8c2c15c9ffa92d75)
+* v0.1.0 - 2014-10-17:
+    * Initial version
