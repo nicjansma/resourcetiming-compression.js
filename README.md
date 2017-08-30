@@ -258,7 +258,7 @@ Or via ``gulp``:
         * Reverses hostnames in Trie entries (#10) for better compression
         * `getResourceTiming()` now returns an object of `{ restiming, servertiming }`
             instead of just `restiming` (#17)
-    * **New Features**:`
+    * **New Features**:
         * Adds ServerTiming data if available (#17)
         * Adds new initiator types (#15): `beacon`, `fetch`
         * Resource contribution scores (#16)
