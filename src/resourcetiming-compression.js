@@ -144,14 +144,12 @@
                 } else if (typeof node === "string") {
                     // this is a leaf, but we need to go further, so convert it into a branch
                     cur = cur[letter] = { "|": node };
+                } else if (i === (letters.length - 1)) {
+                    // this is the end of our key, and we've hit an existing node.  Add our timings.
+                    cur[letter]["|"] = value;
                 } else {
-                    if (i === (letters.length - 1)) {
-                        // this is the end of our key, and we've hit an existing node.  Add our timings.
-                        cur[letter]["|"] = value;
-                    } else {
-                        // continue onwards
-                        cur = cur[letter];
-                    }
+                    // continue onwards
+                    cur = cur[letter];
                 }
             }
         }
@@ -211,17 +209,17 @@
                 topNode = {};
                 topNode[node] = cur[node];
                 return topNode;
-            } else {
-                // other nodes we return name and value separately
-                return { name: node, value: cur[node] };
             }
+
+            // other nodes we return name and value separately
+            return { name: node, value: cur[node] };
         } else if (top) {
             // top node with more than 1 child, return it as-is
             return cur;
-        } else {
-            // more than two nodes and not the top, we can't compress any more
-            return false;
         }
+
+        // more than two nodes and not the top, we can't compress any more
+        return false;
     };
 
     /**
@@ -256,6 +254,7 @@
      * @returns {number} navigationStart time, or 0 if not accessible
      */
     ResourceTimingCompression.getNavStartTime = function(frame) {
+        /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "frameLoc" }] */
         var navStart = 0, frameLoc;
 
         if (!frame) {
@@ -460,9 +459,9 @@
     ResourceTimingCompression.toBase36 = function(n) {
         if (typeof n === "number" && n !== 0) {
             return n.toString(36);
-        } else {
-            return typeof n === "string" ? n : "";
         }
+
+        return typeof n === "string" ? n : "";
     };
 
     /**
@@ -660,9 +659,9 @@
 
             // change everything to base36 and remove any trailing ,s
             return sizes.map(this.toBase36).join(",").replace(/,+$/, "");
-        } else {
-            return "";
         }
+
+        return "";
     };
 
     /**
@@ -830,22 +829,20 @@
             // if this entry already exists, add a pipe as a separator
             if (results[url] !== undefined) {
                 results[url] += "|" + data;
+            } else if (visibleEntries[url] !== undefined) {
+                // For the first time we see this URL, add resource dimensions if we have them
+                // We use * as an additional separator to indicate it is not a new resource entry
+                // The following characters will not be URL encoded:
+                // *!-.()~_ but - and . are special to number representation so we don't use them
+                // After the *, the type of special data (ResourceTiming = 0) is added
+                results[url] =
+                    SPECIAL_DATA_PREFIX +
+                    SPECIAL_DATA_DIMENSION_TYPE +
+                    visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
+                    + "|"
+                    + data;
             } else {
-                // for the first time we see this URL, add resource dimensions if we have them
-                if (visibleEntries[url] !== undefined) {
-                    // We use * as an additional separator to indicate it is not a new resource entry
-                    // The following characters will not be URL encoded:
-                    // *!-.()~_ but - and . are special to number representation so we don't use them
-                    // After the *, the type of special data (ResourceTiming = 0) is added
-                    results[url] =
-                        SPECIAL_DATA_PREFIX +
-                        SPECIAL_DATA_DIMENSION_TYPE +
-                        visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
-                        + "|"
-                        + data;
-                } else {
-                    results[url] = data;
-                }
+                results[url] = data;
             }
         }
 

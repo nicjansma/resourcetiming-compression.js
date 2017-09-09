@@ -77,7 +77,7 @@
         //
         describe(".convertToTrie()", function() {
             it("should convert a single node", function() {
-                var data = {"abc": "abc"};
+                var data = { "abc": "abc" };
                 var expected = {
                     "a": {
                         "b": {
@@ -89,7 +89,7 @@
             });
 
             it("should convert a two-node tree whose nodes don't intersect", function() {
-                var data = {"abc": "abc", "xyz": "xyz"};
+                var data = { "abc": "abc", "xyz": "xyz" };
                 var expected = {
                     "a": {
                         "b": {
@@ -106,7 +106,7 @@
             });
 
             it("should convert a complex tree", function() {
-                var data = {"abc": "abc", "abcd": "abcd", "ab": "ab"};
+                var data = { "abc": "abc", "abcd": "abcd", "ab": "ab" };
                 var expected = {
                     "a": {
                         "b": {
@@ -127,7 +127,7 @@
         //
         describe(".optimizeTrie()", function() {
             it("should optimize a single-node tree", function() {
-                var data = {"abc": "abc"};
+                var data = { "abc": "abc" };
                 var expected = {
                     "abc": "abc"
                 };
@@ -138,7 +138,7 @@
             });
 
             it("should optimize a simple tree", function() {
-                var data = {"abc": "abc", "xyz": "xyz"};
+                var data = { "abc": "abc", "xyz": "xyz" };
                 var expected = {
                     "abc": "abc",
                     "xyz": "xyz"
@@ -150,7 +150,7 @@
             });
 
             it("should optimize a complex tree", function() {
-                var data = {"abc": "abc", "abcd": "abcd", "ab": "ab"};
+                var data = { "abc": "abc", "abcd": "abcd", "ab": "ab" };
                 var expected = {
                     "ab":
                     {
@@ -355,8 +355,8 @@
         describe("accumulateServerTimingEntries()", function() {
             it("Should increment our count collector", function() {
                 var serverTimingCollection = {};
-                ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{name: "n1", description: "d1"}, {name: "n2", description: "d1"}]);
-                ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{name: "n2", description: "d1"}, {name: "n2", description: "d2"}]);
+                ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{ name: "n1", description: "d1" }, { name: "n2", description: "d1" }]);
+                ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{ name: "n2", description: "d1" }, { name: "n2", description: "d2" }]);
 
                 expect(serverTimingCollection).to.eql({
                     n1: {
@@ -396,9 +396,9 @@
                         }
                     }
                 })).to.eql([
-            ["m2", "d2a", "d2b"],
-            ["m1", "d1"],
-            ["m0"]
+                    ["m2", "d2a", "d2b"],
+                    ["m1", "d1"],
+                    ["m0"]
                 ]);
             });
             it("Should special case exactly one empty description", function() {
@@ -418,8 +418,8 @@
         describe("indexServerTiming", function() {
             it("Should index a lookup", function() {
                 expect(ResourceTimingCompression.indexServerTiming([
-            ["metric0", "d1"],
-            ["metric1", "d2a", "d2b"]
+                    ["metric0", "d1"],
+                    ["metric1", "d2a", "d2b"]
                 ])).to.eql({
                     metric0: {
                         index: 0,

@@ -462,8 +462,8 @@
         }
 
         // Find indices of cells that were affected by our resource.
-        var low = this.searchSortedFirst(cells, {ts: startTime}, getTs);
-        var up = this.searchSortedLast(cells, {ts: responseEnd}, getTs);
+        var low = this.searchSortedFirst(cells, { ts: startTime }, getTs);
+        var up = this.searchSortedLast(cells, { ts: responseEnd }, getTs);
 
         var tot = 0.0;
 
@@ -525,9 +525,9 @@
     ResourceTimingDecompression.getInitiatorTypeFromIndex = function(index) {
         if (this.REV_INITIATOR_TYPES.hasOwnProperty(index)) {
             return this.REV_INITIATOR_TYPES[index];
-        } else {
-            return "other";
         }
+
+        return "other";
     };
 
     /**
