@@ -13,7 +13,7 @@
   },
   "license": "MIT",
   "scripts": {
-    "test": "gulp travis --verbose"
+    "test": "gulp --verbose"
   },
   "devDependencies": {
     "commander": "^2.9.0",
