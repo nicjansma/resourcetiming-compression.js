@@ -324,6 +324,11 @@
             return dimensionData;
         }
 
+        // If x is 0, and the last dimension, then it will be excluded, so initialize to 0
+        // If x & y are 0, and the last dimensions, then both will be excluded, so initialize to 0
+        dimensionData.y = 0;
+        dimensionData.x = 0;
+
         // Base 36 decode and assign to correct keys of dimensionData.
         for (i = 0; i < dimensions.length; i++) {
             if (dimensions[i] === "") {
@@ -331,6 +336,14 @@
             } else {
                 dimensionData[this.REV_DIMENSION_NAMES[i]] = parseInt(dimensions[i], 36);
             }
+        }
+
+        // If naturalHeight and naturalWidth are missing, then they are the same as height and width
+        if (!dimensionData.hasOwnProperty("naturalHeight")) {
+            dimensionData.naturalHeight = dimensionData.height;
+        }
+        if (!dimensionData.hasOwnProperty("naturalWidth")) {
+            dimensionData.naturalWidth = dimensionData.width;
         }
 
         return dimensionData;
