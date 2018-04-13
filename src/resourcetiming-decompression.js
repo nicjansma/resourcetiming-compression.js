@@ -111,6 +111,11 @@
     };
 
     /**
+     * Are hostnames in the compressed trie reversed or not
+     */
+    ResourceTimingDecompression.HOSTNAMES_REVERSED = true;
+
+    /**
      * Initiator type map
      */
     ResourceTimingDecompression.INITIATOR_TYPES = {
@@ -545,7 +550,10 @@
             return {};
         }
 
-        url = ResourceTimingDecompression.reverseHostname(url);
+        if (ResourceTimingDecompression.HOSTNAMES_REVERSED) {
+            url = ResourceTimingDecompression.reverseHostname(url);
+        }
+
         var initiatorType = parseInt(data[0], 10);
         data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
