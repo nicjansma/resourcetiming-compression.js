@@ -36,6 +36,11 @@
     };
 
     /**
+     * Should hostnames in the compressed trie be reversed or not
+     */
+    ResourceTimingCompression.HOSTNAMES_REVERSED = true;
+
+    /**
      * Initiator type map
      */
     ResourceTimingCompression.INITIATOR_TYPES = {
@@ -824,7 +829,9 @@
             }
 
             url = this.trimUrl(e.name, this.trimUrls);
-            url = this.reverseHostname(url);
+            if (ResourceTimingCompression.HOSTNAMES_REVERSED) {
+                url = this.reverseHostname(url);
+            }
 
             // if this entry already exists, add a pipe as a separator
             if (results[url] !== undefined) {
