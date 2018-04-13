@@ -526,7 +526,8 @@
                             // if these are different from its display height and width, we should report that
                             // because it indicates scaling in HTML
                             // If the image came from a srcset, then the naturalHeight/Width will be density corrected.
-                            // We get the actual physical dimensions by assigning the image to an uncorrected Image object.
+                            // We get the actual physical dimensions by assigning the image to an uncorrected Image
+                            // object.
                             // This should load from in-memory cache, so there should be no extra load.
                             var realImg = new Image();
                             realImg.onload = function() {
