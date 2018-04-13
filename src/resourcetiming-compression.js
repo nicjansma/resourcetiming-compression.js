@@ -130,10 +130,6 @@
                 urlFixed = urlFixed.replace(this.xssBreakWords[i], "$1" + XSS_BREAK_DELIM + "$2");
             }
 
-            if (!entries.hasOwnProperty(url)) {
-                continue;
-            }
-
             value = entries[url];
             letters = urlFixed.split("");
             cur = trie;
