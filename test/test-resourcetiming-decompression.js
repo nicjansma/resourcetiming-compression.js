@@ -275,7 +275,11 @@
             it("Should a height, width of 1.", function() {
                 expect({
                     height: 1,
-                    width: 1
+                    width: 1,
+                    y: 0,
+                    x: 0,
+                    naturalHeight: 1,
+                    naturalWidth: 1
                 }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1"));
             });
 
@@ -283,6 +287,8 @@
                 expect({
                     height: 1,
                     width: 1,
+                    naturalHeight: 1,
+                    naturalWidth: 1,
                     y: 1,
                     x: 1
                 }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1,1,1"));
@@ -292,9 +298,22 @@
                 expect({
                     height: 1,
                     width: 1,
+                    naturalHeight: 1,
+                    naturalWidth: 1,
                     y: 0,
                     x: 1
                 }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1,,1"));
+            });
+
+            it("Should find a height, width, x of 1 and y of 0, naturalHeight of 2 and naturalWidth of 4.", function() {
+                expect({
+                    height: 1,
+                    width: 1,
+                    naturalHeight: 2,
+                    naturalWidth: 4,
+                    y: 0,
+                    x: 1
+                }).to.eql(ResourceTimingDecompression.decompressDimension("*01,1,,1,2,4"));
             });
         });
 
