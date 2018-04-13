@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v0.4.0
+v1.0.1
 
 [http://nicj.net](http://nicj.net)
 
@@ -253,6 +253,9 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.0.1 - 2018-04-13:
+    * Make hostname reversal configurable (#20)
+    * Add `naturalHeight` and `naturalWidth` to dimensionData (#20)
 * v1.0.0 - 2017-08-29:
     * **Breaking Changes**:
         * Reverses hostnames in Trie entries ([#10]) for better compression
