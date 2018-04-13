@@ -36,6 +36,11 @@
     };
 
     /**
+     * Should hostnames in the compressed trie be reversed or not
+     */
+    ResourceTimingCompression.HOSTNAMES_REVERSED = true;
+
+    /**
      * Initiator type map
      */
     ResourceTimingCompression.INITIATOR_TYPES = {
@@ -497,7 +502,7 @@
                 if (el) {
                     // src = IMG, IFRAME
                     // xlink:href = svg:IMAGE
-                    src = el.src || el.getAttribute("src") || el.getAttribute("xlink:href");
+                    src = el.currentSrc || el.src || el.getAttribute("src") || el.getAttribute("xlink:href");
 
                     // change src to be relative
                     a.href = src;
@@ -516,6 +521,30 @@
                                 Math.round(rect.top + y),
                                 Math.round(rect.left + x),
                             ];
+
+                            // If this is an image, it has a naturalHeight & naturalWidth
+                            // if these are different from its display height and width, we should report that
+                            // because it indicates scaling in HTML
+                            // If the image came from a srcset, then the naturalHeight/Width will be density corrected.
+                            // We get the actual physical dimensions by assigning the image to an uncorrected Image
+                            // object.
+                            // This should load from in-memory cache, so there should be no extra load.
+                            var realImg = new Image();
+                            realImg.onload = function() {
+                                if (
+                                    (realImg.naturalHeight || realImg.naturalWidth)
+                                    &&
+                                    (
+                                        entries[src][0] !== realImg.naturalHeight
+                                        ||
+                                        entries[src][1] !== realImg.naturalWidth
+                                    )
+                                ) {
+                                    entries[src].push(realImg.naturalHeight, realImg.naturalWidth);
+                                }
+                            };
+                            realImg.src = el.src;
+
                         }
                     }
                 }
@@ -824,7 +853,9 @@
             }
 
             url = this.trimUrl(e.name, this.trimUrls);
-            url = this.reverseHostname(url);
+            if (ResourceTimingCompression.HOSTNAMES_REVERSED) {
+                url = this.reverseHostname(url);
+            }
 
             // if this entry already exists, add a pipe as a separator
             if (results[url] !== undefined) {

@@ -111,6 +111,11 @@
     };
 
     /**
+     * Are hostnames in the compressed trie reversed or not
+     */
+    ResourceTimingDecompression.HOSTNAMES_REVERSED = true;
+
+    /**
      * Initiator type map
      */
     ResourceTimingDecompression.INITIATOR_TYPES = {
@@ -319,6 +324,11 @@
             return dimensionData;
         }
 
+        // If x is 0, and the last dimension, then it will be excluded, so initialize to 0
+        // If x & y are 0, and the last dimensions, then both will be excluded, so initialize to 0
+        dimensionData.y = 0;
+        dimensionData.x = 0;
+
         // Base 36 decode and assign to correct keys of dimensionData.
         for (i = 0; i < dimensions.length; i++) {
             if (dimensions[i] === "") {
@@ -326,6 +336,14 @@
             } else {
                 dimensionData[this.REV_DIMENSION_NAMES[i]] = parseInt(dimensions[i], 36);
             }
+        }
+
+        // If naturalHeight and naturalWidth are missing, then they are the same as height and width
+        if (!dimensionData.hasOwnProperty("naturalHeight")) {
+            dimensionData.naturalHeight = dimensionData.height;
+        }
+        if (!dimensionData.hasOwnProperty("naturalWidth")) {
+            dimensionData.naturalWidth = dimensionData.width;
         }
 
         return dimensionData;
@@ -545,7 +563,10 @@
             return {};
         }
 
-        url = ResourceTimingDecompression.reverseHostname(url);
+        if (ResourceTimingDecompression.HOSTNAMES_REVERSED) {
+            url = ResourceTimingDecompression.reverseHostname(url);
+        }
+
         var initiatorType = parseInt(data[0], 10);
         data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
