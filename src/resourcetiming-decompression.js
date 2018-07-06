@@ -570,8 +570,7 @@
         var initiatorType = parseInt(data[0], 10);
         data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
-        var sizes = data.length > 1 ? data[1] : "";
-        var specialData = data.length > 1 ? data[1] : "";
+        var specialData = data.length > 1 ? data.slice(1) : [];
 
         // convert all timings from base36
         for (var i = 0; i < timings.length; i++) {
@@ -613,8 +612,8 @@
         res.duration = res.responseEnd > 0 ? (res.responseEnd - res.startTime) : 0;
 
         // decompress resource size data
-        if (sizes.length > 0) {
-            this.decompressSpecialData(specialData, res, st);
+        for (i = 0; i < specialData.length; i++) {
+            this.decompressSpecialData(specialData[i], res, st);
         }
 
         return res;

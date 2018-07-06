@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.0.1
+v1.0.2
 
 [http://nicj.net](http://nicj.net)
 
@@ -253,6 +253,8 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.0.2 - 2018-07-06:
+    * Fixed decompression when multiple special entries exist
 * v1.0.1 - 2018-04-13:
     * Make hostname reversal configurable (#20)
     * Add `naturalHeight` and `naturalWidth` to dimensionData (#20)

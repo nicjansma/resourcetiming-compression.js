@@ -21,6 +21,35 @@
     //
     describe("ResourceTimingDecompression", function() {
         //
+        // .decodeCompressedResource()
+        //
+        describe(".decodeCompressedResource()", function() {
+            it("should process more than one special datas", function() {
+                var entry = ResourceTimingDecompression.decodeCompressedResource(
+                    "68y,95,7x,5s,5r,,3y,3y,1*1a,a,b*3100,:1",
+                    "http://moc.oof",
+                    ["edge", ["cdn-cache", "HIT", "MISS"], "origin"]);
+
+                expect(entry.name).to.be("http://foo.com");
+                expect(entry.encodedBodySize).to.be(10);
+                expect(entry.transferSize).to.be(20);
+                expect(entry.decodedBodySize).to.be(21);
+                expect(entry.serverTiming).to.eql([
+                    {
+                        name: "edge",
+                        description: "",
+                        duration: 100
+                    },
+                    {
+                        name: "cdn-cache",
+                        description: "HIT",
+                        duration: 0
+                    }
+                ]);
+            });
+        });
+
+        //
         // .decodeCompressedResourceTimeStamp
         //
         describe(".decodeCompressedResourceTimeStamp()", function() {
