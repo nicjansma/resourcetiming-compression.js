@@ -13,7 +13,7 @@ module.exports = function(config) {
 
         frameworks: ["mocha", "expect"],
         reporters: ["progress", "coverage", "tap"],
-        browsers: ["PhantomJS"],
+        browsers: ["Chrome"],
 
         files: [
             "src/*.js",

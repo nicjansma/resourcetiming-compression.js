@@ -22,6 +22,147 @@
     var ResourceTimingDecompression = {};
 
     //
+    // Constants / Config
+    //
+
+    /**
+     * Are hostnames in the compressed trie reversed or not
+     */
+    ResourceTimingDecompression.HOSTNAMES_REVERSED = true;
+
+    /**
+     * Initiator type map
+     */
+    ResourceTimingDecompression.INITIATOR_TYPES = {
+        /** Unknown type */
+        "other": 0,
+        /** IMG element */
+        "img": 1,
+        /** LINK element (i.e. CSS) */
+        "link": 2,
+        /** SCRIPT element */
+        "script": 3,
+        /** Resource referenced in CSS */
+        "css": 4,
+        /** XMLHttpRequest */
+        "xmlhttprequest": 5,
+        /** The root HTML page itself */
+        "html": 6,
+        /** IMAGE element inside a SVG */
+        "image": 7,
+        /** [sendBeacon]{@link https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon} */
+        "beacon": 8,
+        /** [Fetch API]{@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API} */
+        "fetch": 9,
+        /** An IFRAME */
+        "iframe": "a",
+        /** IE11 and Edge (some versions) send "subdocument" instead of "iframe" */
+        "subdocument": "a"
+    };
+
+    /**
+    * Dimension name map
+    */
+    ResourceTimingDecompression.DIMENSION_NAMES = {
+        "height": 0,
+        "width": 1,
+        "y": 2,
+        "x": 3,
+        "naturalHeight": 4,
+        "naturalWidth": 5
+    };
+
+    /**
+     * Script mask map
+     */
+    ResourceTimingDecompression.SCRIPT_ATTRIBUTES = {
+        "scriptAsync": 0x1,
+        "scriptDefer": 0x2,
+        "scriptBody": 0x4
+    };
+
+    /**
+     * These are the only `rel` types that might be reference-able from
+     * ResourceTiming.
+     *
+     * https://html.spec.whatwg.org/multipage/links.html#linkTypes
+     *
+     * @enum {number}
+     * @memberof BOOMR.plugins.ResourceTiming
+     */
+    ResourceTimingDecompression.REL_TYPES = {
+        "prefetch": 1,
+        "preload": 2,
+        "prerender": 3,
+        "stylesheet": 4
+    };
+
+    /**
+     * Returns a map with key/value pairs reversed.
+     *
+     * @param {object} origMap Map we want to reverse.
+     *
+     * @returns {object} New map with reversed mappings.
+     */
+    ResourceTimingDecompression.getRevMap = function(origMap) {
+        var revMap = {};
+        for (var key in origMap) {
+            if (origMap.hasOwnProperty(key)) {
+                revMap[origMap[key]] = key;
+            }
+        }
+        return revMap;
+    };
+
+    /**
+     * Reverse initiator type map
+     */
+    ResourceTimingDecompression.REV_INITIATOR_TYPES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.INITIATOR_TYPES);
+
+    /**
+     * Reverse dimension name map
+     */
+    ResourceTimingDecompression.REV_DIMENSION_NAMES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.DIMENSION_NAMES);
+
+    /**
+     * Reverse script attribute map
+     */
+    ResourceTimingDecompression.REV_SCRIPT_ATTRIBUTES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.SCRIPT_ATTRIBUTES);
+
+    /**
+     * Reverse link rel attribute map
+     */
+    ResourceTimingDecompression.REV_REL_TYPES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.REL_TYPES);
+
+    // Any ResourceTiming data time that starts with this character is not a time,
+    // but something else (like dimension data)
+    ResourceTimingDecompression.SPECIAL_DATA_PREFIX = "*";
+
+    // Dimension data special type
+    ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_TYPE = "0";
+    ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_PREFIX = ResourceTimingDecompression.SPECIAL_DATA_PREFIX +
+        ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_TYPE;
+
+    // Dimension data special type
+    ResourceTimingDecompression.SPECIAL_DATA_SIZE_TYPE = "1";
+
+    // Dimension data special type
+    ResourceTimingDecompression.SPECIAL_DATA_SCRIPT_TYPE = "2";
+
+    // Dimension data special type
+    ResourceTimingDecompression.SPECIAL_DATA_SERVERTIMING_TYPE = "3";
+
+    // Link attributes
+    ResourceTimingDecompression.SPECIAL_DATA_LINK_ATTR_TYPE = "4";
+
+    // Regular Expression to parse a URL
+    ResourceTimingDecompression.HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
+
+    //
     // Functions
     //
 
@@ -111,104 +252,6 @@
     };
 
     /**
-     * Are hostnames in the compressed trie reversed or not
-     */
-    ResourceTimingDecompression.HOSTNAMES_REVERSED = true;
-
-    /**
-     * Initiator type map
-     */
-    ResourceTimingDecompression.INITIATOR_TYPES = {
-        "other": 0,
-        "img": 1,
-        "link": 2,
-        "script": 3,
-        "css": 4,
-        "xmlhttprequest": 5,
-        "html": 6,
-        // IMAGE element inside a SVG
-        "image": 7,
-        "beacon": 8,
-        "fetch": 9
-    };
-
-    /**
-    * Dimension name map
-    */
-    ResourceTimingDecompression.DIMENSION_NAMES = {
-        "height": 0,
-        "width": 1,
-        "y": 2,
-        "x": 3,
-        "naturalHeight": 4,
-        "naturalWidth": 5
-    };
-
-    /**
-     * Script mask map
-     */
-    ResourceTimingDecompression.SCRIPT_ATTRIBUTES = {
-        "scriptAsync": 1,
-        "scriptDefer": 2,
-        "scriptBody": 4
-    };
-
-    /**
-     * Returns a map with key/value pairs reversed.
-     *
-     * @param {object} origMap Map we want to reverse.
-     *
-     * @returns {object} New map with reversed mappings.
-     */
-    ResourceTimingDecompression.getRevMap = function(origMap) {
-        var revMap = {};
-        for (var key in origMap) {
-            if (origMap.hasOwnProperty(key)) {
-                revMap[origMap[key]] = key;
-            }
-        }
-        return revMap;
-    };
-
-    /**
-     * Reverse initiator type map
-     */
-    ResourceTimingDecompression.REV_INITIATOR_TYPES = ResourceTimingDecompression.
-        getRevMap(ResourceTimingDecompression.INITIATOR_TYPES);
-
-    /**
-     * Reverse dimension name map
-     */
-    ResourceTimingDecompression.REV_DIMENSION_NAMES = ResourceTimingDecompression.
-        getRevMap(ResourceTimingDecompression.DIMENSION_NAMES);
-
-    /**
-     * Reverse script attribute map
-     */
-    ResourceTimingDecompression.REV_SCRIPT_ATTRIBUTES = ResourceTimingDecompression.
-        getRevMap(ResourceTimingDecompression.SCRIPT_ATTRIBUTES);
-
-    // Any ResourceTiming data time that starts with this character is not a time,
-    // but something else (like dimension data)
-    var SPECIAL_DATA_PREFIX = "*";
-
-    // Dimension data special type
-    var SPECIAL_DATA_DIMENSION_TYPE = "0";
-    var SPECIAL_DATA_DIMENSION_PREFIX = SPECIAL_DATA_PREFIX + SPECIAL_DATA_DIMENSION_TYPE;
-
-    // Dimension data special type
-    var SPECIAL_DATA_SIZE_TYPE = "1";
-
-    // Dimension data special type
-    var SPECIAL_DATA_SCRIPT_TYPE = "2";
-
-    // Dimension data special type
-    var SPECIAL_DATA_SERVERTIMING_TYPE = "3";
-
-    // Regular Expression to parse a URL
-    var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
-
-    /**
      * Decompresses a compressed ResourceTiming trie
      *
      * @param {object} rt ResourceTiming trie
@@ -262,7 +305,8 @@
                 for (var i = 0; i < timings.length; i++) {
                     var resourceData = timings[i];
 
-                    if (resourceData.length > 0 && resourceData[0] === SPECIAL_DATA_PREFIX) {
+                    if (resourceData.length > 0 &&
+                        resourceData[0] === ResourceTimingDecompression.SPECIAL_DATA_PREFIX) {
                         // dimensions or sizes for this resource
                         continue;
                     }
@@ -295,7 +339,8 @@
      */
     ResourceTimingDecompression.isDimensionData = function(resourceData) {
         return resourceData &&
-            resourceData.substring(0, SPECIAL_DATA_DIMENSION_PREFIX.length) === SPECIAL_DATA_DIMENSION_PREFIX;
+            resourceData.substring(0, ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_PREFIX.length)
+                === ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_PREFIX;
     };
 
     /**
@@ -315,7 +360,7 @@
         }
 
         // Remove special prefix
-        resourceData = resourceData.substring(SPECIAL_DATA_DIMENSION_PREFIX.length);
+        resourceData = resourceData.substring(ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_PREFIX.length);
 
         dimensions = resourceData.split(",");
 
@@ -568,7 +613,7 @@
         }
 
         var initiatorType = parseInt(data[0], 10);
-        data = data.length > 1 ? data.split(SPECIAL_DATA_PREFIX) : [];
+        data = data.length > 1 ? data.split(ResourceTimingDecompression.SPECIAL_DATA_PREFIX) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
         var specialData = data.length > 1 ? data.slice(1) : [];
 
@@ -662,6 +707,27 @@
     };
 
     /**
+     * Decompresses link attributes
+     *
+     * @param {string} compressed String with a single integer.
+     * @param {ResourceTiming} resource ResourceTiming object.
+     * @returns {ResourceTiming} ResourceTiming object with decompressed link attribute type.
+     */
+    ResourceTimingDecompression.decompressLinkAttrType = function(compressed, resource) {
+        var data = parseInt(compressed, 10);
+
+        if (!resource) {
+            resource = {};
+        }
+
+        if (this.REV_REL_TYPES.hasOwnProperty(data)) {
+            resource.rel = this.REV_REL_TYPES[data];
+        }
+
+        return resource;
+    };
+
+    /**
      * Decompresses size information back into the specified resource
      *
      * @param {string} compressed Compressed string
@@ -735,12 +801,14 @@
 
         compressed = compressed.substring(1);
 
-        if (dataType === SPECIAL_DATA_SIZE_TYPE) {
+        if (dataType === ResourceTimingDecompression.SPECIAL_DATA_SIZE_TYPE) {
             resource = this.decompressSize(compressed, resource);
-        } else if (dataType === SPECIAL_DATA_SCRIPT_TYPE) {
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_SCRIPT_TYPE) {
             resource = this.decompressScriptType(compressed, resource);
-        } else if (dataType === SPECIAL_DATA_SERVERTIMING_TYPE) {
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_SERVERTIMING_TYPE) {
             resource = this.decompressServerTimingEntries(st, compressed, resource);
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_LINK_ATTR_TYPE) {
+            resource = this.decompressLinkAttrType(compressed, resource);
         }
 
         return resource;
@@ -753,7 +821,7 @@
      * @returns {string} the input URL with the hostname portion reversed, if it can be found
      */
     ResourceTimingDecompression.reverseHostname = function(url) {
-        return url.replace(HOSTNAME_REGEX, function(m, p1, p2, p3) {
+        return url.replace(ResourceTimingDecompression.HOSTNAME_REGEX, function(m, p1, p2, p3) {
             // p2 is everything after the first `://` and before the next `/`
             // which includes `<username>:<password>@` and `:<port-number>`, if present
             return p1 + ResourceTimingDecompression.reverseString(p2) + p3;

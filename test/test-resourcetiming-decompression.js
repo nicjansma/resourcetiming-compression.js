@@ -26,7 +26,7 @@
         describe(".decodeCompressedResource()", function() {
             it("should process more than one special datas", function() {
                 var entry = ResourceTimingDecompression.decodeCompressedResource(
-                    "68y,95,7x,5s,5r,,3y,3y,1*1a,a,b*3100,:1",
+                    "68y,95,7x,5s,5r,,3y,3y,1*1a,a,b*27*3100,:1*41",
                     "http://moc.oof",
                     ["edge", ["cdn-cache", "HIT", "MISS"], "origin"]);
 
@@ -46,6 +46,10 @@
                         duration: 0
                     }
                 ]);
+                expect(entry.scriptAsync).to.be(true);
+                expect(entry.scriptDefer).to.be(true);
+                expect(entry.scriptBody).to.be(true);
+                expect(entry.rel).to.be("prefetch");
             });
         });
 
@@ -159,7 +163,10 @@
             });
         });
 
-        describe("decompressSize()", function() {
+        //
+        // .decompressSize
+        //
+        describe(".decompressSize()", function() {
             // X-O: [0, 0, 0] -> [0, 0, 0] -> [empty]
             it("Should reverse cross-origin resources", function() {
                 expect({
@@ -288,7 +295,10 @@
             });
         });
 
-        describe("decompressDimension()", function() {
+        //
+        // .decompressDimension
+        //
+        describe(".decompressDimension()", function() {
             it("Should return an empty object because of the lack of prefix.", function() {
                 expect({}).to.eql(ResourceTimingDecompression.decompressDimension("a,b,c,d"));
             });
@@ -346,7 +356,10 @@
             });
         });
 
-        describe("addDimension()", function() {
+        //
+        // .addDimension
+        //
+        describe(".addDimension()", function() {
             it("Should return an empty object, because there is no dimension data.", function() {
                 expect(
                 {}
@@ -389,7 +402,10 @@
             });
         });
 
-        describe("searchSortedLast()", function() {
+        //
+        // .searchSortedLast
+        //
+        describe(".searchSortedLast()", function() {
             it("Should return -1, because x is <= all the values.", function() {
                 expect(
                     -1
@@ -403,7 +419,10 @@
             });
         });
 
-        describe("searchSortedFirst()", function() {
+        //
+        // .searchSortedFirst
+        //
+        describe(".searchSortedFirst()", function() {
             it("Should return 0, because x is <= all the values.", function() {
                 expect(
                     0
@@ -417,7 +436,10 @@
             });
         });
 
-        describe("decompressSpecialData()", function() {
+        //
+        // .decompressSpecialData
+        //
+        describe(".decompressSpecialData()", function() {
             it("Should add sizes to the resource.", function() {
                 expect({
                     transferSize: 10,
@@ -449,7 +471,10 @@
             });
         });
 
-        describe("addContribution()", function() {
+        //
+        // .addContribution
+        //
+        describe(".addContribution()", function() {
             it("Should add contribution scores to the resources.", function() {
                 expect([
                     { startTime: 0, responseEnd: 320, contribution: 0.609375 },
@@ -655,7 +680,10 @@
             });
         });
 
-        describe("decompressServerTiming", function() {
+        //
+        // .decompressServerTiming
+        //
+        describe(".decompressServerTiming()", function() {
             var optimized = [["m0", "d0a", "d0b"], ["m1", "d1a", "d1b"], "m2"];
             it("Should resolve to m0-d0a", function() {
                 ["123", "123:0", "123:.0", "123:0.0"].forEach(function(compressed) {
@@ -704,5 +732,70 @@
             });
         });
 
+        //
+        // .decompressScriptType
+        //
+        describe(".decompressScriptType()", function() {
+            it("should set scriptAsync attribute", function() {
+                expect(ResourceTimingDecompression.decompressScriptType("1")).to.eql({
+                    scriptAsync: true,
+                    scriptBody: false,
+                    scriptDefer: false
+                });
+            });
+
+            it("should set scriptDefer attribute", function() {
+                expect(ResourceTimingDecompression.decompressScriptType("2")).to.eql({
+                    scriptAsync: false,
+                    scriptBody: false,
+                    scriptDefer: true
+                });
+            });
+
+            it("should set scriptBody attribute", function() {
+                expect(ResourceTimingDecompression.decompressScriptType("4")).to.eql({
+                    scriptAsync: false,
+                    scriptBody: true,
+                    scriptDefer: false
+                });
+            });
+
+            it("should set all script* attributes", function() {
+                expect(ResourceTimingDecompression.decompressScriptType("7")).to.eql({
+                    scriptAsync: true,
+                    scriptBody: true,
+                    scriptDefer: true
+                });
+            });
+        });
+
+        //
+        // .decompressLinkAttrType
+        //
+        describe(".decompressLinkAttrType()", function() {
+            it("should set rel='prefetch' attribute", function() {
+                expect(ResourceTimingDecompression.decompressLinkAttrType("1")).to.eql({
+                    rel: "prefetch"
+                });
+            });
+
+            it("should set rel='preload' attribute", function() {
+                expect(ResourceTimingDecompression.decompressLinkAttrType("2")).to.eql({
+                    rel: "preload"
+                });
+            });
+
+            it("should set rel='prerender' attribute", function() {
+                expect(ResourceTimingDecompression.decompressLinkAttrType("3")).to.eql({
+                    rel: "prerender"
+                });
+            });
+
+            it("should set rel='stylesheet' attributes", function() {
+                expect(ResourceTimingDecompression.decompressLinkAttrType("4")).to.eql({
+                    rel: "stylesheet"
+                });
+            });
+        });
     });
 }(typeof window !== "undefined" ? window : undefined));
