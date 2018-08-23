@@ -159,6 +159,9 @@
     // Link attributes
     ResourceTimingDecompression.SPECIAL_DATA_LINK_ATTR_TYPE = "4";
 
+    // Namespaced data
+    ResourceTimingDecompression.SPECIAL_DATA_ARBITRARY_TYPE = "5";
+
     // Regular Expression to parse a URL
     ResourceTimingDecompression.HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
 
@@ -731,7 +734,7 @@
      * Decompresses size information back into the specified resource
      *
      * @param {string} compressed Compressed string
-     * @param {ResourceTiming} resource ResourceTiming bject
+     * @param {ResourceTiming} resource ResourceTiming object
      * @returns {ResourceTiming} ResourceTiming object with decompressed sizes
      */
     ResourceTimingDecompression.decompressSize = function(compressed, resource) {
@@ -782,6 +785,43 @@
         return resource;
     };
 
+  /**
+   * Decompresses arbitrary data back into the specified resource
+   *
+   * @param {string} compressed Compressed string
+   * @param {ResourceTiming} resource ResourceTiming object
+   * @returns {ResourceTiming} ResourceTiming object with decompressed sizes
+   */
+    ResourceTimingDecompression.decompressNamespacedData = function(compressed, resource) {
+        resource = resource || {};
+
+        if (typeof compressed === "string") {
+            var delimiter = ":";
+            var colon = compressed.indexOf(delimiter);
+            if (colon > 0) {
+                var key = compressed.substring(0, colon);
+                var value = compressed.substring(colon + delimiter.length);
+
+                resource._data = resource._data || {};
+                if (resource._data.hasOwnProperty(key)) {
+                    // we are adding our 2nd or nth value (n > 2) for this key
+                    if (!Array.isArray(resource._data[key])) {
+                        // we are adding our 2nd value for this key, convert to array before pushing
+                        resource._data[key] = [resource._data[key]];
+                    }
+
+                    // push it onto the array
+                    resource._data[key].push(value);
+                } else {
+                    // we are adding our 1st value for this key
+                    resource._data[key] = value;
+                }
+            }
+        }
+
+        return resource;
+    };
+
     /**
      * Decompresses special data such as resource size or script type into the given resource.
      *
@@ -809,6 +849,8 @@
             resource = this.decompressServerTimingEntries(st, compressed, resource);
         } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_LINK_ATTR_TYPE) {
             resource = this.decompressLinkAttrType(compressed, resource);
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_ARBITRARY_TYPE) {
+            resource = this.decompressNamespacedData(compressed, resource);
         }
 
         return resource;
