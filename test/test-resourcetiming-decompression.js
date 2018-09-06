@@ -437,6 +437,48 @@
         });
 
         //
+        // .decompressNamespacedData
+        //
+        describe(".decompressNamespacedData()", function() {
+            it("Should handled undefined.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressNamespacedData());
+            });
+            it("Should handle empty string.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressNamespacedData(""));
+            });
+            it("Should handle invalid data.", function() {
+                expect({}).to.eql(ResourceTimingDecompression.decompressNamespacedData("foo"));
+            });
+            it("Should decompress valid data.", function() {
+                expect({ _data: { foo: "bar" } }).to.eql(ResourceTimingDecompression.decompressNamespacedData("foo:bar"));
+            });
+            it("Should decompress valid data (with a semicolon in the value).", function() {
+                expect({ _data: { foo: "bar:baz" } }).to.eql(ResourceTimingDecompression.decompressNamespacedData("foo:bar:baz"));
+            });
+
+            it("Should decompress data with different keys.", function() {
+                var resource = {};
+                ResourceTimingDecompression.decompressNamespacedData("a:1", resource);
+                ResourceTimingDecompression.decompressNamespacedData("b:2", resource);
+                expect({ _data: { a: 1, b: 2 } }).to.eql(resource);
+            });
+            it("Should decompress data with keys that collide twice.", function() {
+                var resource = {};
+                ResourceTimingDecompression.decompressNamespacedData("a:1", resource);
+                ResourceTimingDecompression.decompressNamespacedData("a:2", resource);
+                expect({ _data: { a: [1, 2] } }).to.eql(resource);
+            });
+            it("Should decompress data with keys that collide thrice.", function() {
+                var resource = {};
+                ResourceTimingDecompression.decompressNamespacedData("a:1", resource);
+                ResourceTimingDecompression.decompressNamespacedData("a:2", resource);
+                ResourceTimingDecompression.decompressNamespacedData("a:3", resource);
+                expect({ _data: { a: [1, 2, 3] } }).to.eql(resource);
+            });
+
+        });
+
+        //
         // .decompressSpecialData
         //
         describe(".decompressSpecialData()", function() {
