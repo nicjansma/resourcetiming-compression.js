@@ -13,7 +13,15 @@ module.exports = function(config) {
 
         frameworks: ["mocha", "expect"],
         reporters: ["progress", "coverage", "tap"],
-        browsers: ["Chrome"],
+        browsers: ["ChromeHeadlessNoSandbox"],
+
+        // you can define custom flags
+        customLaunchers: {
+            ChromeHeadlessNoSandbox: {
+                base: "ChromeHeadless",
+                flags: ["--no-sandbox"]
+            }
+        },
 
         files: [
             "src/*.js",
