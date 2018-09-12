@@ -22,6 +22,112 @@
     var ResourceTimingCompression = {};
 
     //
+    // Constants / Config
+    //
+
+    /**
+     * Should hostnames in the compressed trie be reversed or not
+     */
+    ResourceTimingCompression.HOSTNAMES_REVERSED = true;
+
+    /**
+     * Initiator type map
+     */
+    ResourceTimingCompression.INITIATOR_TYPES = {
+        /** Unknown type */
+        "other": 0,
+        /** IMG element */
+        "img": 1,
+        /** LINK element (i.e. CSS) */
+        "link": 2,
+        /** SCRIPT element */
+        "script": 3,
+        /** Resource referenced in CSS */
+        "css": 4,
+        /** XMLHttpRequest */
+        "xmlhttprequest": 5,
+        /** The root HTML page itself */
+        "html": 6,
+        /** IMAGE element inside a SVG */
+        "image": 7,
+        /** [sendBeacon]{@link https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon} */
+        "beacon": 8,
+        /** [Fetch API]{@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API} */
+        "fetch": 9,
+        /** An IFRAME */
+        "iframe": "a",
+        /** IE11 and Edge (some versions) send "subdocument" instead of "iframe" */
+        "subdocument": "a"
+    };
+
+    // Words that will be broken (by ensuring the optimized trie doesn't contain
+    // the whole string) in URLs, to ensure NoScript doesn't think this is an XSS attack
+    ResourceTimingCompression.DEFAULT_XSS_BREAK_WORDS = [
+        /(h)(ref)/gi,
+        /(s)(rc)/gi,
+        /(a)(ction)/gi
+    ];
+
+    // Delimiter to use to break a XSS word
+    ResourceTimingCompression.XSS_BREAK_DELIM = "\n";
+
+    // Maximum number of characters in a URL
+    ResourceTimingCompression.DEFAULT_URL_LIMIT = 500;
+
+    // Any ResourceTiming data time that starts with this character is not a time,
+    // but something else (like dimension data)
+    ResourceTimingCompression.SPECIAL_DATA_PREFIX = "*";
+
+    // Dimension data special type
+    ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE = "0";
+
+    // Dimension data special type
+    ResourceTimingCompression.SPECIAL_DATA_SIZE_TYPE = "1";
+
+    // Dimension data special type
+    ResourceTimingCompression.SPECIAL_DATA_SCRIPT_TYPE = "2";
+    // The following make up a bitmask
+    ResourceTimingCompression.SPECIAL_DATA_SCRIPT_ASYNC_ATTR = 0x1;
+    ResourceTimingCompression.SPECIAL_DATA_SCRIPT_DEFER_ATTR = 0x2;
+    // 0 => HEAD, 1 => BODY
+    ResourceTimingCompression.SPECIAL_DATA_SCRIPT_LOCAT_ATTR = 0x4;
+
+    // Dimension data special type
+    ResourceTimingCompression.SPECIAL_DATA_SERVERTIMING_TYPE = "3";
+
+    // Link attributes
+    ResourceTimingCompression.SPECIAL_DATA_LINK_ATTR_TYPE = "4";
+
+    /**
+     * These are the only `rel` types that might be reference-able from
+     * ResourceTiming.
+     *
+     * https://html.spec.whatwg.org/multipage/links.html#linkTypes
+     *
+     * @enum {number}
+     * @memberof BOOMR.plugins.ResourceTiming
+     */
+    ResourceTimingCompression.REL_TYPES = {
+        "prefetch": 1,
+        "preload": 2,
+        "prerender": 3,
+        "stylesheet": 4
+    };
+
+    // Regular Expression to parse a URL
+    ResourceTimingCompression.HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
+
+    /**
+     * List of URLs (strings or regexs) to trim
+     */
+    ResourceTimingCompression.trimUrls = [];
+
+    /**
+     * Words to break to avoid XSS filters
+     */
+    ResourceTimingCompression.xssBreakWords = ResourceTimingCompression.DEFAULT_XSS_BREAK_WORDS;
+
+    //
     // Functions
     //
     /**
@@ -34,68 +140,6 @@
         root.ResourceTimingCompression = previousObj;
         return ResourceTimingCompression;
     };
-
-    /**
-     * Should hostnames in the compressed trie be reversed or not
-     */
-    ResourceTimingCompression.HOSTNAMES_REVERSED = true;
-
-    /**
-     * Initiator type map
-     */
-    ResourceTimingCompression.INITIATOR_TYPES = {
-        "other": 0,
-        "img": 1,
-        "link": 2,
-        "script": 3,
-        "css": 4,
-        "xmlhttprequest": 5,
-        "html": 6,
-        // IMAGE element inside a SVG
-        "image": 7,
-        "beacon": 8,
-        "fetch": 9
-    };
-
-    // Words that will be broken (by ensuring the optimized trie doesn't contain
-    // the whole string) in URLs, to ensure NoScript doesn't think this is an XSS attack
-    var DEFAULT_XSS_BREAK_WORDS = [
-        /(h)(ref)/gi,
-        /(s)(rc)/gi,
-        /(a)(ction)/gi
-    ];
-
-    // Delimiter to use to break a XSS word
-    var XSS_BREAK_DELIM = "\n";
-
-    // Maximum number of characters in a URL
-    var DEFAULT_URL_LIMIT = 500;
-
-    // Any ResourceTiming data time that starts with this character is not a time,
-    // but something else (like dimension data)
-    var SPECIAL_DATA_PREFIX = "*";
-
-    // Dimension data special type
-    var SPECIAL_DATA_DIMENSION_TYPE = "0";
-
-    // Dimension data special type
-    var SPECIAL_DATA_SIZE_TYPE = "1";
-
-    // Dimension data special type
-    var SPECIAL_DATA_SERVERTIMING_TYPE = "3";
-
-    // Regular Expression to parse a URL
-    var HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
-
-    /**
-     * List of URLs (strings or regexs) to trim
-     */
-    ResourceTimingCompression.trimUrls = [];
-
-    /**
-     * Words to break to avoid XSS filters
-     */
-    ResourceTimingCompression.xssBreakWords = DEFAULT_XSS_BREAK_WORDS;
 
     /**
      * Converts entries to a Trie:
@@ -127,7 +171,9 @@
             for (i = 0; i < this.xssBreakWords.length; i++) {
                 // Add a XSS_BREAK_DELIM character after the first letter.  optimizeTrie will
                 // ensure this sequence doesn't get combined.
-                urlFixed = urlFixed.replace(this.xssBreakWords[i], "$1" + XSS_BREAK_DELIM + "$2");
+                urlFixed = urlFixed.replace(
+                    this.xssBreakWords[i],
+                    "$1" + ResourceTimingCompression.XSS_BREAK_DELIM + "$2");
             }
 
             value = entries[url];
@@ -187,7 +233,7 @@
                     // swap the current leaf with compressed one
                     delete cur[node];
 
-                    if (node === XSS_BREAK_DELIM) {
+                    if (node === ResourceTimingCompression.XSS_BREAK_DELIM) {
                         // If this node is a newline, which can't be in a regular URL,
                         // it's due to the XSS patch.  Remove the placeholder character,
                         // and make sure this node isn't compressed by incrementing
@@ -271,9 +317,9 @@
             frameLoc = frame.location && frame.location.href;
 
             if (("performance" in frame) &&
-            frame.performance &&
-            frame.performance.timing &&
-            frame.performance.timing.navigationStart) {
+                frame.performance &&
+                frame.performance.timing &&
+                frame.performance.timing.navigationStart) {
                 navStart = frame.performance.timing.navigationStart;
             }
         } catch (e) {
@@ -293,7 +339,8 @@
      * @returns {PerformanceEntry[]} Performance entries
      */
     ResourceTimingCompression.findPerformanceEntriesForFrame = function(frame, isTopWindow, offset, depth) {
-        var entries = [], i, navEntries, navStart, frameNavStart, frameOffset, navEntry, t, frameLoc, rtEntry;
+        var entries = [], i, navEntries, navStart, frameNavStart, frameOffset, navEntry, t, frameLoc, rtEntry,
+            links = {}, scripts = {}, a;
 
         if (typeof isTopWindow === "undefined") {
             isTopWindow = true;
@@ -313,6 +360,12 @@
 
         try {
             navStart = this.getNavStartTime(frame);
+
+            a = frame.document.createElement("a");
+
+            // get all scripts as an object keyed on script.src
+            collectResources(a, scripts, "script");
+            collectResources(a, links, "link");
 
             // get sub-frames' entries first
             if (frame.frames) {
@@ -426,14 +479,23 @@
                     responseStart: t.responseStart ? (t.responseStart + offset) : 0,
                     responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0
                 };
+
                 if (t.encodedBodySize || t.decodedBodySize || t.transferSize) {
                     rtEntry.encodedBodySize = t.encodedBodySize;
                     rtEntry.decodedBodySize = t.decodedBodySize;
                     rtEntry.transferSize = t.transferSize;
                 }
+
                 if (t.serverTiming && t.serverTiming.length) {
                     rtEntry.serverTiming = t.serverTiming;
                 }
+
+                // If this is a script, set its flags
+                this.updateScriptFlags(scripts, t, rtEntry);
+
+                // Update link flags
+                this.updateLinkFlags(links, t, rtEntry);
+
                 frameFixedEntries.push(rtEntry);
             }
 
@@ -443,6 +505,58 @@
         }
 
         return entries;
+    };
+
+    /**
+     * Sets .scriptAttrs flags for a compressed RT entry for <script> tags
+     *
+     * @param {object[]} scripts Scripts array
+     * @param {ResourceTiming} entry ResourceTiming entry from the frame
+     * @param {object} rtEntry Compressed RT entry
+     */
+    ResourceTimingCompression.updateScriptFlags = function(scripts, entry, rtEntry) {
+        if ((entry.initiatorType === "script" || entry.initiatorType === "link") && scripts[entry.name]) {
+            var s = scripts[entry.name];
+
+            // Add async & defer based on attribute values
+            rtEntry.scriptAttrs = (s.async ? ResourceTimingCompression.SPECIAL_DATA_SCRIPT_ASYNC_ATTR : 0) |
+                (s.defer ? ResourceTimingCompression.SPECIAL_DATA_SCRIPT_DEFER_ATTR : 0);
+
+            while (s.nodeType === 1 && s.nodeName !== "BODY") {
+                s = s.parentNode;
+            }
+
+            // Add location by traversing up the tree until we either hit BODY or document
+            rtEntry.scriptAttrs |= (s.nodeName === "BODY" ?
+                ResourceTimingCompression.SPECIAL_DATA_SCRIPT_LOCAT_ATTR : 0);
+        }
+    };
+
+    /**
+     * Sets .linkAttrs flags for a compressed RT entry for <link> tags
+     *
+     * @param {object[]} links Links array
+     * @param {ResourceTiming} entry ResourceTiming entry from the frame
+     * @param {object} rtEntry Compressed RT entry
+     */
+    ResourceTimingCompression.updateLinkFlags = function(links, entry, rtEntry) {
+        // If this is a link, set its flags
+        if (entry.initiatorType === "link" && links[entry.name]) {
+            // split on ASCII whitespace
+            links[entry.name].rel.split(/[\u0009\u000A\u000C\u000D\u0020]+/).find(function(rel) {
+                // eslint-disable-line no-loop-func
+                // `rel`s are case insensitive
+                rel = rel.toLowerCase();
+
+                // only report the `rel` if it's from the known list
+                if (ResourceTimingCompression.REL_TYPES[rel]) {
+                    rtEntry.linkAttrs = ResourceTimingCompression.REL_TYPES[rel];
+                    return true;
+                }
+
+                return false;
+            });
+        }
     };
 
     /**
@@ -466,6 +580,27 @@
     };
 
     /**
+     * Collect external resources by tagName
+     *
+     * @param {Element} a an anchor element
+     * @param {Object} obj object of resources where the key is the url
+     * @param {string} tagName tag name to collect
+     */
+    function collectResources(a, obj, tagName) {
+        Array.prototype
+            .forEach
+            .call(a.ownerDocument.getElementsByTagName(tagName), function(r) {
+                // Get canonical URL
+                a.href = r.currentSrc || r.src || r.getAttribute("xlink:href") || r.href;
+
+                // only get external resource
+                if (a.href.match(/^https?:\/\//)) {
+                    obj[a.href] = r;
+                }
+            });
+    }
+
+    /**
      * Finds all remote resources in the selected window that are visible, and returns an object
      * keyed by the url with an array of height,width,top,left as the value
      *
@@ -473,6 +608,10 @@
      * @returns {Object} Object with URLs of visible assets as keys, and Array[height, width, top, left] as value
      */
     ResourceTimingCompression.getVisibleEntries = function(win) {
+        if (!win) {
+            return {};
+        }
+
         // lower-case tag names should be used:
         // https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagName
         var els = ["img", "iframe", "image"], entries = {}, x, y, doc = win.document, a = doc.createElement("A");
@@ -751,7 +890,7 @@
         }
 
         // apply limits
-        return this.cleanupURL(url, DEFAULT_URL_LIMIT);
+        return this.cleanupURL(url, ResourceTimingCompression.DEFAULT_URL_LIMIT);
     };
 
     /**
@@ -829,23 +968,38 @@
             // add content and transfer size info
             var compSize = this.compressSize(e);
             if (compSize !== "") {
-                data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SIZE_TYPE + compSize;
+                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
+                    ResourceTimingCompression.SPECIAL_DATA_SIZE_TYPE +
+                    compSize;
+            }
+
+            if (e.hasOwnProperty("scriptAttrs")) {
+                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
+                    ResourceTimingCompression.SPECIAL_DATA_SCRIPT_TYPE +
+                    e.scriptAttrs;
+            }
+
+            if (e.hasOwnProperty("linkAttrs")) {
+                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
+                    ResourceTimingCompression.SPECIAL_DATA_LINK_ATTR_TYPE +
+                    e.linkAttrs;
             }
 
             if (e.serverTiming && e.serverTiming.length) {
-                data += SPECIAL_DATA_PREFIX + SPECIAL_DATA_SERVERTIMING_TYPE +
-                e.serverTiming.reduce(function(stData, entry, entryIndex) { /* eslint no-loop-func:0 */
-                    var duration = String(entry.duration);
-                    if (duration.substring(0, 2) === "0.") {
-                    // lop off the leading 0
-                        duration = duration.substring(1);
-                    }
-                    var lookupKey = ResourceTimingCompression.identifyServerTimingEntry(
-                      serverTiming.indexed[entry.name].index,
-                      serverTiming.indexed[entry.name].descriptions[entry.description]);
-                    stData += (entryIndex > 0 ? "," : "") + duration + lookupKey;
-                    return stData;
-                }, "");
+                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
+                    ResourceTimingCompression.SPECIAL_DATA_SERVERTIMING_TYPE +
+                    e.serverTiming.reduce(function(stData, entry, entryIndex) { /* eslint no-loop-func:0 */
+                        var duration = String(entry.duration);
+                        if (duration.substring(0, 2) === "0.") {
+                        // lop off the leading 0
+                            duration = duration.substring(1);
+                        }
+                        var lookupKey = ResourceTimingCompression.identifyServerTimingEntry(
+                          serverTiming.indexed[entry.name].index,
+                          serverTiming.indexed[entry.name].descriptions[entry.description]);
+                        stData += (entryIndex > 0 ? "," : "") + duration + lookupKey;
+                        return stData;
+                    }, "");
             }
 
             url = this.trimUrl(e.name, this.trimUrls);
@@ -863,8 +1017,8 @@
                 // *!-.()~_ but - and . are special to number representation so we don't use them
                 // After the *, the type of special data (ResourceTiming = 0) is added
                 results[url] =
-                    SPECIAL_DATA_PREFIX +
-                    SPECIAL_DATA_DIMENSION_TYPE +
+                    ResourceTimingCompression.SPECIAL_DATA_PREFIX +
+                    ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE +
                     visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
                     + "|"
                     + data;
@@ -886,7 +1040,7 @@
      * @returns {string} the input URL with the hostname portion reversed, if it can be found
      */
     ResourceTimingCompression.reverseHostname = function(url) {
-        return url.replace(HOSTNAME_REGEX, function(m, p1, p2, p3) {
+        return url.replace(ResourceTimingCompression.HOSTNAME_REGEX, function(m, p1, p2, p3) {
             // p2 is everything after the first `://` and before the next `/`
             // which includes `<username>:<password>@` and `:<port-number>`, if present
             return p1 + ResourceTimingCompression.reverseString(p2) + p3;

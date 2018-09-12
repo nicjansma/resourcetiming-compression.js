@@ -168,7 +168,10 @@
             });
         });
 
-        describe("compressSize()", function() {
+        //
+        // .compressSize
+        //
+        describe(".compressSize()", function() {
             it("Should return an empty string if ResourceTiming2 is not supported", function() {
                 expect(ResourceTimingCompression.compressSize({})).to.eql("");
             });
@@ -301,7 +304,10 @@
             });
         });
 
-        describe("reverseString()", function() {
+        //
+        // .reverseString
+        //
+        describe(".reverseString()", function() {
             it("Should reverse empty string", function() {
                 expect(ResourceTimingCompression.reverseString("")).to.eql("");
             });
@@ -313,7 +319,10 @@
             });
         });
 
-        describe("reverseHostname()", function() {
+        //
+        // .reverseHostname
+        //
+        describe(".reverseHostname()", function() {
             it("Should reverse the hostname portion of `http://domain.com`", function() {
                 expect(ResourceTimingCompression.reverseHostname("http://domain.com")).to.eql("http://moc.niamod");
             });
@@ -352,7 +361,10 @@
             });
         });
 
-        describe("accumulateServerTimingEntries()", function() {
+        //
+        // .accumulateServerTimingEntries
+        //
+        describe(".accumulateServerTimingEntries()", function() {
             it("Should increment our count collector", function() {
                 var serverTimingCollection = {};
                 ResourceTimingCompression.accumulateServerTimingEntries(serverTimingCollection, [{ name: "n1", description: "d1" }, { name: "n2", description: "d1" }]);
@@ -376,7 +388,10 @@
             });
         });
 
-        describe("compressServerTiming", function() {
+        //
+        // .compressServerTiming
+        //
+        describe(".compressServerTiming()", function() {
             it("Should create a lookup from our count collector", function() {
                 expect(ResourceTimingCompression.compressServerTiming({
                     m0: {
@@ -415,7 +430,10 @@
             });
         });
 
-        describe("indexServerTiming", function() {
+        //
+        // .indexServerTiming
+        //
+        describe(".indexServerTiming()", function() {
             it("Should index a lookup", function() {
                 expect(ResourceTimingCompression.indexServerTiming([
                     ["metric0", "d1"],
@@ -451,7 +469,10 @@
             });
         });
 
-        describe("identifyServerTimingEntry", function() {
+        //
+        // .identifyServerTimingEntry
+        //
+        describe(".identifyServerTimingEntry()", function() {
             it("Should create identifiers", function() {
                 expect(ResourceTimingCompression.identifyServerTimingEntry(0, 0)).to.eql("");
                 expect(ResourceTimingCompression.identifyServerTimingEntry(0, 1)).to.eql(":.1");
@@ -460,5 +481,276 @@
             });
         });
 
+        //
+        // .updateScriptFlags
+        //
+        describe(".updateScriptFlags()", function() {
+            it("Should do nothing if the script isn't in the scripts map", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateScriptFlags(
+                    {}, {
+                        initiatorType: "script",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.scriptAttrs).to.eql(undefined);
+            });
+
+            it("Should compress a async script", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateScriptFlags(
+                    {
+                        "http://foo": {
+                            async: true,
+                            defer: false,
+                            nodeName: "SCRIPT"
+                        }
+                    }, {
+                        initiatorType: "script",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.scriptAttrs).to.eql(0x1);
+            });
+
+            it("Should compress a async defer script", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateScriptFlags(
+                    {
+                        "http://foo": {
+                            async: true,
+                            defer: true,
+                            nodeName: "SCRIPT"
+                        }
+                    }, {
+                        initiatorType: "script",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.scriptAttrs).to.eql(0x1 | 0x2);
+            });
+
+            it("Should compress a async defer in the body script", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateScriptFlags(
+                    {
+                        "http://foo": {
+                            async: true,
+                            defer: true,
+                            nodeName: "SCRIPT",
+                            nodeType: 1,
+                            parentNode: {
+                                nodeName: "BODY"
+                            }
+                        }
+                    }, {
+                        initiatorType: "script",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.scriptAttrs).to.eql(0x1 | 0x2 | 0x4);
+            });
+        });
+
+        //
+        // .updateLinkFlags
+        //
+        describe(".updateLinkFlags()", function() {
+            it("Should do nothing if the link isn't in the links map", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateLinkFlags(
+                    {}, {
+                        initiatorType: "link",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.linkAttrs).to.eql(undefined);
+            });
+
+            it("Should compress a prefetch link", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateLinkFlags(
+                    {
+                        "http://foo": {
+                            rel: "prefetch"
+                        }
+                    }, {
+                        initiatorType: "link",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.linkAttrs).to.eql(1);
+            });
+
+            it("Should compress a prerender link", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateLinkFlags(
+                    {
+                        "http://foo": {
+                            rel: "prerender"
+                        }
+                    }, {
+                        initiatorType: "link",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.linkAttrs).to.eql(3);
+            });
+
+            it("Should compress a preload link", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateLinkFlags(
+                    {
+                        "http://foo": {
+                            rel: "preload"
+                        }
+                    }, {
+                        initiatorType: "link",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.linkAttrs).to.eql(2);
+            });
+
+            it("Should compress a stylesheet link", function() {
+                var rtEntry = {};
+
+                ResourceTimingCompression.updateLinkFlags(
+                    {
+                        "http://foo": {
+                            rel: "stylesheet"
+                        }
+                    }, {
+                        initiatorType: "link",
+                        name: "http://foo"
+                    }, rtEntry);
+
+                expect(rtEntry.linkAttrs).to.eql(4);
+            });
+        });
+
+        //
+        // .inArray
+        //
+        describe(".inArray()", function() {
+            it("Should return false on an empty array", function() {
+                expect(ResourceTimingCompression.inArray(1)).to.eql(false);
+                expect(ResourceTimingCompression.inArray(1, [])).to.eql(false);
+            });
+
+            it("Should return false on an empty val", function() {
+                expect(ResourceTimingCompression.inArray(undefined, [])).to.eql(false);
+            });
+
+            it("Should return true on an matching value", function() {
+                expect(ResourceTimingCompression.inArray("a", ["b", "c", "a"])).to.eql(true);
+            });
+
+            it("Should return false on an missing value", function() {
+                expect(ResourceTimingCompression.inArray("z", ["b", "c", "a"])).to.eql(false);
+            });
+        });
+
+        //
+        // .cleanupURL
+        //
+        describe(".cleanupURL()", function() {
+            it("Should return an empty string when no argument is given", function() {
+                expect(ResourceTimingCompression.cleanupURL()).to.eql("");
+            });
+
+            it("Should return an empty string when null is passed as argument", function() {
+                expect(ResourceTimingCompression.cleanupURL(null)).to.eql("");
+            });
+
+            it("Should return an empty string when undefined is passed as argument", function() {
+                expect(ResourceTimingCompression.cleanupURL(undefined)).to.eql("");
+            });
+
+            it("Should return an empty string when an empty string is passed as argument", function() {
+                expect(ResourceTimingCompression.cleanupURL(undefined)).to.eql("");
+            });
+
+            it("Should return an empty string when false is passed as argument", function() {
+                expect(ResourceTimingCompression.cleanupURL(false)).to.eql("");
+            });
+
+            it("Should return an empty string when an array is passed as argument", function() {
+                expect(ResourceTimingCompression.cleanupURL(["a", "b"])).to.eql("");
+            });
+
+            it("Should not trim a URL underneath the limit", function() {
+                expect(ResourceTimingCompression.cleanupURL("http://foo.com", 1000)).to.eql("http://foo.com");
+            });
+
+            it("Should trim a URL with a query string over the limit at the query string", function() {
+                expect(ResourceTimingCompression.cleanupURL("http://foo.com?aaaaaa", 20)).to.eql("http://foo.com?...");
+            });
+
+            it("Should trim a URL with a query string too long over the limit at the limit", function() {
+                expect(ResourceTimingCompression.cleanupURL("http://foo.com?aaaaaa", 14)).to.eql("http://foo....");
+            });
+
+            it("Should trim a URL without a query string over the limit at the limit", function() {
+                expect(ResourceTimingCompression.cleanupURL("http://foo.com/a/b/c/d", 17)).to.eql("http://foo.com...");
+            });
+        });
+
+        //
+        // .compressResourceTiming
+        //
+        describe(".compressResourceTiming()", function() {
+            it("Should compress a simple entry", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: 1,
+                    responseEnd: 2
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "11,1"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should add script attributes", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "script",
+                    startTime: 1,
+                    responseEnd: 2,
+                    scriptAttrs: 4
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "31,1*24"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should add link attributes", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "link",
+                    startTime: 1,
+                    responseEnd: 2,
+                    linkAttrs: 2
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "21,1*42"
+                    },
+                    servertiming: {}
+                });
+            });
+        });
     });
 }(typeof window !== "undefined" ? window : undefined));

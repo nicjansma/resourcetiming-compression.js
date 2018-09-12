@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.0.2
+v1.1.0
 
 [http://nicj.net](http://nicj.net)
 
@@ -253,6 +253,11 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.1.0 - 2018-09-11:
+    * Decompresses properly when multiple special entries exist
+    * Compress and decompress `LINK rel` and `SCRIPT` attributes
+    * Decompress namespaced data
+    * Adds new `INITIATOR_TYPES`
 * v1.0.2 - 2018-07-06:
     * Fixed decompression when multiple special entries exist
 * v1.0.1 - 2018-04-13:
