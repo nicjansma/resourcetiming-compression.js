@@ -1,0 +1,38 @@
+# top-most EditorConfig file
+root = true
+
+[**]
+end_of_line = lf
+insert_final_newline = true
+
+[**.js, **.json]
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+quote_type = double
+
+[**.yml, **.css]
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[**.html]
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[**.md]
+indent_style = space
+indent_size = 4
+
+# The indentation in package.json will always need to be 2 spaces
+# https://github.com/npm/npm/issues/4718
+[package.json, bower.json]
+indent_style = space
+indent_size = 2
+
+[**.tf, **.tfvars]
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+quote_type = double
