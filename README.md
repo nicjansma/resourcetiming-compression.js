@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.2.0
+v1.2.1
 
 [http://nicj.net](http://nicj.net)
 
@@ -253,6 +253,8 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.2.1 - 2018-11-26:
+    * Add root-level `compression` and `decompression` exports
 * v1.2.0 - 2018-11-26:
     * `ResourceTimingCompression.getVisibleEntries`: Fixed onload bug, updated to work with `<PICTURE>` elements
     * `ResourceTimingCompression`: Dimensions work with `HOSTNAMES_REVERSED`
