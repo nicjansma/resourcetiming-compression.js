@@ -105,7 +105,6 @@
      * https://html.spec.whatwg.org/multipage/links.html#linkTypes
      *
      * @enum {number}
-     * @memberof BOOMR.plugins.ResourceTiming
      */
     ResourceTimingCompression.REL_TYPES = {
         "prefetch": 1,
@@ -633,54 +632,67 @@
             for (i = 0; i < elements.length; i++) {
                 el = elements[i];
 
-                // look at this element if it has a src attribute, and we haven't already looked at it
-                if (el) {
-                    // src = IMG, IFRAME
-                    // xlink:href = svg:IMAGE
-                    src = el.currentSrc || el.src || el.getAttribute("src") || el.getAttribute("xlink:href");
+                if (!el) {
+                    continue;
+                }
 
-                    // change src to be relative
-                    a.href = src;
-                    src = a.href;
+                // look at this element if it has a src attribute or xlink:href, and we haven't already looked at it
+                // currentSrc = IMG inside a PICTURE element or IMG srcset
+                // src = IMG, IFRAME
+                // xlink:href = svg:IMAGE
+                src = el.currentSrc ||
+                    el.src ||
+                    (typeof el.getAttribute === "function" &&
+                        (el.getAttribute("src")) || el.getAttribute("xlink:href"));
 
-                    if (src && !entries[src]) {
-                        rect = el.getBoundingClientRect();
+                // make src absolute
+                a.href = src;
+                src = a.href;
 
-                        // Require both height & width to be non-zero
-                        // IE <= 8 does not report rect.height/rect.width so we need offsetHeight & width
-                        if ((rect.height || el.offsetHeight)
-                            && (rect.width || el.offsetWidth)) {
-                            entries[src] = [
-                                (rect.height || el.offsetHeight),
-                                (rect.width || el.offsetWidth),
-                                Math.round(rect.top + y),
-                                Math.round(rect.left + x),
-                            ];
+                if (!src || entries[src]) {
+                    continue;
+                }
 
-                            // If this is an image, it has a naturalHeight & naturalWidth
-                            // if these are different from its display height and width, we should report that
-                            // because it indicates scaling in HTML
-                            // If the image came from a srcset, then the naturalHeight/Width will be density corrected.
-                            // We get the actual physical dimensions by assigning the image to an uncorrected Image
-                            // object.
-                            // This should load from in-memory cache, so there should be no extra load.
-                            var realImg = new Image();
-                            realImg.onload = function() {
-                                if (
-                                    (realImg.naturalHeight || realImg.naturalWidth)
-                                    &&
-                                    (
-                                        entries[src][0] !== realImg.naturalHeight
-                                        ||
-                                        entries[src][1] !== realImg.naturalWidth
-                                    )
-                                ) {
-                                    entries[src].push(realImg.naturalHeight, realImg.naturalWidth);
-                                }
-                            };
-                            realImg.src = el.src;
+                rect = el.getBoundingClientRect();
 
-                        }
+                // Require both height & width to be non-zero
+                // IE <= 8 does not report rect.height/rect.width so we need offsetHeight & width
+                if ((rect.height || el.offsetHeight) && (rect.width || el.offsetWidth)) {
+                    entries[src] = [
+                        rect.height || el.offsetHeight,
+                        rect.width || el.offsetWidth,
+                        Math.round(rect.top + y),
+                        Math.round(rect.left + x)
+                    ];
+
+                    // If this is an image, it has a naturalHeight & naturalWidth
+                    // if these are different from its display height and width, we should report that
+                    // because it indicates scaling in HTML
+                    if (!el.naturalHeight && !el.naturalWidth) {
+                        continue;
+                    }
+
+                    // If the image came from a srcset, then the naturalHeight/Width will be density corrected.
+                    // We get the actual physical dimensions by assigning the image to an uncorrected Image object.
+                    // This should load from in-memory cache, so there should be no extra load.
+                    var realImg, nH, nW;
+
+                    if (el.currentSrc &&
+                        (el.srcset ||
+                          (el.parentNode &&
+                           el.parentNode.nodeName &&
+                           el.parentNode.nodeName.toUpperCase() === "PICTURE"))) {
+                        realImg = el.isConnected ? el.ownerDocument.createElement("IMG") : new window.Image();
+                        realImg.src = src;
+                    } else {
+                        realImg = el;
+                    }
+
+                    nH = realImg.naturalHeight || el.naturalHeight;
+                    nW = realImg.naturalWidth || el.naturalWidth;
+
+                    if ((nH || nW) && (entries[src][0] !== nH || entries[src][1] !== nW)) {
+                        entries[src].push(nH, nW);
                     }
                 }
             }

@@ -88,7 +88,6 @@
      * https://html.spec.whatwg.org/multipage/links.html#linkTypes
      *
      * @enum {number}
-     * @memberof BOOMR.plugins.ResourceTiming
      */
     ResourceTimingDecompression.REL_TYPES = {
         "prefetch": 1,
