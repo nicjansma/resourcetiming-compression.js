@@ -8,3 +8,5 @@ bower.json
 dist
 karma.config.js
 test
+.editorconfig
+eslint.xml
