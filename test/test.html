@@ -12,13 +12,19 @@
     </head>
     <body>
         <div id="mocha"></div>
+        <img src="test.png?natural" />
+        <img src="test.png?scaled" height="100" width="100" />
+        <script>
+            var img = new Image();
+            img.src = "test.png?script";
+        </script>
         <script>
             mocha.setup('bdd');
         </script>
         <script src="test-resourcetiming-compression.js"></script>
         <script src="test-resourcetiming-decompression.js"></script>
         <script>
-            mocha.run();
+            window.addEventListener("load", mocha.run);
         </script>
   </body>
 </html>

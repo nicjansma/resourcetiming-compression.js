@@ -1,5 +1,5 @@
 /* eslint-env node, mocha */
-/* eslint-disable max-len */
+/* eslint-disable max-len, no-unused-expressions */
 (function(root) {
     "use strict";
 
@@ -13,6 +13,10 @@
     var ResourceTimingCompression = root.ResourceTimingCompression ?
         root.ResourceTimingCompression :
         require("../src/resourcetiming-compression");
+
+    var ResourceTimingDecompression = root.ResourceTimingDecompression ?
+        root.ResourceTimingDecompression :
+        require("../src/resourcetiming-decompression");
 
     var expect = root.expect ? root.expect : require("expect.js");
 
@@ -750,6 +754,57 @@
                     },
                     servertiming: {}
                 });
+            });
+        });
+
+        //
+        // .compressResourceTiming
+        //
+        describe(".getResourceTiming()", function() {
+            it("Should get an object with .restiming and .servertiming from the page", function() {
+                var results = ResourceTimingCompression.getResourceTiming();
+
+                expect(results).to.have.own.property("restiming");
+                expect(results).to.have.own.property("servertiming");
+            });
+
+            it("Should contain the scaled PNG image", function() {
+                var results = ResourceTimingCompression.getResourceTiming();
+                var resources = ResourceTimingDecompression.decompressResources(results.restiming, results.servertiming);
+                var scaledImage = resources.find(function(r) {
+                    return r.name.indexOf("?scaled") !== -1;
+                });
+
+                expect(scaledImage).to.exist;
+            });
+
+            it("Should contain the scaled PNG image with timings set", function() {
+                var results = ResourceTimingCompression.getResourceTiming();
+                var resources = ResourceTimingDecompression.decompressResources(results.restiming, results.servertiming);
+                var scaledImage = resources.find(function(r) {
+                    return r.name.indexOf("?scaled") !== -1;
+                });
+
+                expect(scaledImage).to.have.own.property("startTime");
+                expect(scaledImage.startTime).to.be.above(0);
+
+                expect(scaledImage).to.have.own.property("responseEnd");
+                expect(scaledImage.responseEnd).to.be.above(0);
+            });
+
+            it("Should contain the scaled PNG image with dimensions set", function() {
+                var results = ResourceTimingCompression.getResourceTiming();
+                var resources = ResourceTimingDecompression.decompressResources(results.restiming, results.servertiming);
+                var scaledImage = resources.find(function(r) {
+                    return r.name.indexOf("?scaled") !== -1;
+                });
+
+                expect(scaledImage.height).to.equal(100);
+                expect(scaledImage.width).to.equal(100);
+                expect(scaledImage.x).to.be.above(100);
+                expect(scaledImage.y).to.be.above(100);
+                expect(scaledImage.naturalHeight).to.equal(1000);
+                expect(scaledImage.naturalWidth).to.equal(1000);
             });
         });
     });
