@@ -925,7 +925,7 @@
      */
     ResourceTimingCompression.compressResourceTiming = function(win, entries, serverTiming) {
         /* eslint no-script-url:0 */
-        var i, e, results = {}, initiatorType, url, data, visibleEntries = {};
+        var i, e, results = {}, initiatorType, url, finalUrl, data, visibleEntries = {};
 
         // gather visible entries on the page
         visibleEntries = this.getVisibleEntries(win);
@@ -1002,28 +1002,28 @@
                     }, "");
             }
 
-            url = this.trimUrl(e.name, this.trimUrls);
+            finalUrl = url = this.trimUrl(e.name, this.trimUrls);
             if (ResourceTimingCompression.HOSTNAMES_REVERSED) {
-                url = this.reverseHostname(url);
+                finalUrl = this.reverseHostname(url);
             }
 
             // if this entry already exists, add a pipe as a separator
-            if (results[url] !== undefined) {
-                results[url] += "|" + data;
+            if (results[finalUrl] !== undefined) {
+                results[finalUrl] += "|" + data;
             } else if (visibleEntries[url] !== undefined) {
                 // For the first time we see this URL, add resource dimensions if we have them
                 // We use * as an additional separator to indicate it is not a new resource entry
                 // The following characters will not be URL encoded:
                 // *!-.()~_ but - and . are special to number representation so we don't use them
                 // After the *, the type of special data (ResourceTiming = 0) is added
-                results[url] =
+                results[finalUrl] =
                     ResourceTimingCompression.SPECIAL_DATA_PREFIX +
                     ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE +
                     visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
                     + "|"
                     + data;
             } else {
-                results[url] = data;
+                results[finalUrl] = data;
             }
         }
 
