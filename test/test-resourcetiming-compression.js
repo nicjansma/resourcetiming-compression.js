@@ -1,5 +1,5 @@
 /* eslint-env node, mocha */
-/* eslint-disable max-len, no-unused-expressions */
+/* eslint-disable max-len, no-unused-expressions, consistent-return */
 (function(root) {
     "use strict";
 
@@ -19,6 +19,41 @@
         require("../src/resourcetiming-decompression");
 
     var expect = root.expect ? root.expect : require("expect.js");
+
+    /**
+     * Determines if the test environment can get ResourceTiming
+     *
+     * @returns {boolean} True if the environment supports ResourceTiming
+     */
+    function canGetResourceTiming() {
+        if (typeof window === "undefined") {
+            return false;
+        }
+
+        if (window.location && window.location.href) {
+            if (window.location.href.indexOf("file://") !== -1) {
+                return false;
+            }
+        }
+
+        if (!("performance" in window) || !window.performance) {
+            return false;
+        }
+
+        if (typeof window.performance.getEntriesByType !== "function") {
+            return false;
+        }
+
+        if (typeof window.PerformanceResourceTiming === "undefined") {
+            return false;
+        }
+
+        if (window.performance.getEntriesByType("resource").length === 0) {
+            return false;
+        }
+
+        return true;
+    }
 
     //
     // ResourceTimingCompression
@@ -762,6 +797,10 @@
         //
         describe(".getResourceTiming()", function() {
             it("Should get an object with .restiming and .servertiming from the page", function() {
+                if (!canGetResourceTiming()) {
+                    return this.skip();
+                }
+
                 var results = ResourceTimingCompression.getResourceTiming();
 
                 expect(results).to.have.own.property("restiming");
@@ -769,21 +808,39 @@
             });
 
             it("Should contain the scaled PNG image", function() {
+                if (!canGetResourceTiming()) {
+                    return this.skip();
+                }
+
                 var results = ResourceTimingCompression.getResourceTiming();
                 var resources = ResourceTimingDecompression.decompressResources(results.restiming, results.servertiming);
                 var scaledImage = resources.find(function(r) {
                     return r.name.indexOf("?scaled") !== -1;
                 });
 
-                expect(scaledImage).to.exist;
+                if (!scaledImage) {
+                    // Karma won't load the image
+                    return this.skip();
+                }
+
+                expect(scaledImage).to.not.eql(undefined);
             });
 
             it("Should contain the scaled PNG image with timings set", function() {
+                if (!canGetResourceTiming()) {
+                    return this.skip();
+                }
+
                 var results = ResourceTimingCompression.getResourceTiming();
                 var resources = ResourceTimingDecompression.decompressResources(results.restiming, results.servertiming);
                 var scaledImage = resources.find(function(r) {
                     return r.name.indexOf("?scaled") !== -1;
                 });
+
+                if (!scaledImage) {
+                    // Karma won't load the image
+                    return this.skip();
+                }
 
                 expect(scaledImage).to.have.own.property("startTime");
                 expect(scaledImage.startTime).to.be.above(0);
@@ -793,11 +850,20 @@
             });
 
             it("Should contain the scaled PNG image with dimensions set", function() {
+                if (!canGetResourceTiming()) {
+                    return this.skip();
+                }
+
                 var results = ResourceTimingCompression.getResourceTiming();
                 var resources = ResourceTimingDecompression.decompressResources(results.restiming, results.servertiming);
                 var scaledImage = resources.find(function(r) {
                     return r.name.indexOf("?scaled") !== -1;
                 });
+
+                if (!scaledImage) {
+                    // Karma won't load the image
+                    return this.skip();
+                }
 
                 expect(scaledImage.height).to.equal(100);
                 expect(scaledImage.width).to.equal(100);
