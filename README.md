@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.2.1
+v1.2.2
 
 [http://nicj.net](http://nicj.net)
 
@@ -253,6 +253,8 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.2.2 - 2019-05-09
+    * Add additional `initiatorType` values
 * v1.2.1 - 2018-11-26:
     * Add root-level `compression` and `decompression` exports
 * v1.2.0 - 2018-11-26:
