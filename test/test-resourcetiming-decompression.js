@@ -161,6 +161,19 @@
 
                 expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
             });
+
+            it("should decompress the initiatorType for indexes over 9", function() {
+                var data = {
+                    "abc": "j1,7,6,5,5,4,3,3,2,1,0"
+                };
+
+                // swap in a different initiatorType
+                var res = getTimestampsFor("abc");
+                res.initiatorType = "eventsource";
+                var expected = [res];
+
+                expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
+            });
         });
 
         //

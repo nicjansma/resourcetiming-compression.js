@@ -636,7 +636,7 @@
             url = ResourceTimingDecompression.reverseHostname(url);
         }
 
-        var initiatorType = parseInt(data[0], 10);
+        var initiatorType = isNaN(parseInt(data[0], 10)) ? data[0] : parseInt(data[0], 10);
         data = data.length > 1 ? data.split(ResourceTimingDecompression.SPECIAL_DATA_PREFIX) : [];
         var timings = data.length > 0 && data[0].length > 1 ? data[0].substring(1).split(",") : [];
         var specialData = data.length > 1 ? data.slice(1) : [];
