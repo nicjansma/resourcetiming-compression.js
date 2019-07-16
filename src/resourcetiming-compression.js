@@ -932,9 +932,10 @@
      * @param {Window} [win] The Window
      * @param {number} [from] Only get timings from
      * @param {number} [to] Only get timings up to
+     * @param {boolean} skipDimensions Skip gathering resource dimensions
      * @returns {object} Optimized performance entries trie
      */
-    ResourceTimingCompression.getResourceTiming = function(win, from, to) {
+    ResourceTimingCompression.getResourceTiming = function(win, from, to, skipDimensions) {
         /* eslint no-script-url:0 */
         if (typeof win === "undefined") {
             win = window;
@@ -947,22 +948,25 @@
             return {};
         }
 
-        return ResourceTimingCompression.compressResourceTiming(win, entries, serverTiming);
+        return ResourceTimingCompression.compressResourceTiming(win, entries, serverTiming, skipDimensions);
     };
 
     /**
      * Optimizes the specified set of performance entries.
      * @param {Window} win The Window
      * @param {object} entries Performance entries
-     * @param {object} serverTiming object containing `lookup` and `indexed`
+     * @param {object} serverTiming Object containing `lookup` and `indexed`
+     * @param {boolean} skipDimensions Skip gathering resource dimensions
      * @returns {object} Optimized performance entries trie
      */
-    ResourceTimingCompression.compressResourceTiming = function(win, entries, serverTiming) {
+    ResourceTimingCompression.compressResourceTiming = function(win, entries, serverTiming, skipDimensions) {
         /* eslint no-script-url:0 */
         var i, e, results = {}, initiatorType, url, finalUrl, data, visibleEntries = {};
 
-        // gather visible entries on the page
-        visibleEntries = this.getVisibleEntries(win);
+        if (!skipDimensions) {
+            // gather visible entries on the page
+            visibleEntries = this.getVisibleEntries(win);
+        }
 
         for (i = 0; i < entries.length; i++) {
             e = entries[i];

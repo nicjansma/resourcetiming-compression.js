@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.2.3
+v1.2.4
 
 [http://nicj.net](http://nicj.net)
 
@@ -253,6 +253,8 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.2.4 - 2019-07-16
+    * Optional `skipDimensions` for `getResourceTiming()` and `compressResourceTiming()`
 * v1.2.3 - 2019-05-09
     * Decode `initiatorType` above 9 properly
 * v1.2.2 - 2019-05-09

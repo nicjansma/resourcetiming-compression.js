@@ -793,7 +793,7 @@
         });
 
         //
-        // .compressResourceTiming
+        // .getResourceTiming
         //
         describe(".getResourceTiming()", function() {
             it("Should get an object with .restiming and .servertiming from the page", function() {
@@ -871,6 +871,30 @@
                 expect(scaledImage.y).to.be.above(100);
                 expect(scaledImage.naturalHeight).to.equal(1000);
                 expect(scaledImage.naturalWidth).to.equal(1000);
+            });
+
+            it("Should contain the scaled PNG image without dimensions if skipDimensions was set", function() {
+                if (!canGetResourceTiming()) {
+                    return this.skip();
+                }
+
+                var results = ResourceTimingCompression.getResourceTiming(window, undefined, undefined, true);
+                var resources = ResourceTimingDecompression.decompressResources(results.restiming, results.servertiming);
+                var scaledImage = resources.find(function(r) {
+                    return r.name.indexOf("?scaled") !== -1;
+                });
+
+                if (!scaledImage) {
+                    // Karma won't load the image
+                    return this.skip();
+                }
+
+                expect(scaledImage.height).to.be.undefined;
+                expect(scaledImage.width).to.be.undefined;
+                expect(scaledImage.x).to.be.undefined;
+                expect(scaledImage.y).to.be.undefined;
+                expect(scaledImage.naturalHeight).to.be.undefined;
+                expect(scaledImage.naturalWidth).to.be.undefined;
             });
         });
     });
