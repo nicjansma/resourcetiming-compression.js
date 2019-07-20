@@ -130,15 +130,16 @@ This information is encoded as a "special value" in the resource's timings array
 
 The data will be stored in the order of: `[e, t, d]`.
 
-* `e`: `encodedBodySize` is the [Base36](https://en.wikipedia.org/wiki/Base36) decoded value (`encodedBodySize = parseInt(e, 36)`)
+* `e`:
+    * If a [Base36](https://en.wikipedia.org/wiki/Base36) encoded number, `e` is the value of `encodedBodySize` (`encodedBodySize = parseInt(e, 36)`)
+    * If missing, `encodedBodySize` was `0` (no body, just headers)
 * `t`:
-    * If a Base36 encoded number, `t` is the `transferSize` increase in size over `encodedBodySize` (`transferSize = parseInt(e, 36) + parseInt(t, 36)`)
-    * If the value of `"_"`, `transferSize` is `0`
-    * If missing, `transferSize` was either `0` or `undefined`
+    * If a [Base36](https://en.wikipedia.org/wiki/Base36) encoded number, `t` is the `transferSize` increase in size over `encodedBodySize` (`transferSize = parseInt(e, 36) + parseInt(t, 36)`)
+    * If the value of `"_"`, `transferSize` is `0` (cached)
+    * If missing, `transferSize` was either `0` (cached) or `undefined` (unknown)
 * `d`:
-    * If a Base36 encoded number, `d` is the `decodedBodySize` increase in size over `encodedBodySize` (`decodedBodySize = parseInt(e, 36) + parseInt(d, 36)`)
-    * If `0`, `encodedBodySize` is `0`
-    * If missing, `encodedBodySize` was either `0` or `undefined`
+    * If a [Base36](https://en.wikipedia.org/wiki/Base36) encoded number, `d` is the `decodedBodySize` increase in size over `encodedBodySize` (`decodedBodySize = parseInt(e, 36) + parseInt(d, 36)`)
+    * If missing, `decodedBodySize` was equal to `encodedBodySize` (the request was not encoded)
 
 Taking the following example:
 
