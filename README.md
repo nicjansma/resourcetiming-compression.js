@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.2.4
+v1.3.0
 
 [http://nicj.net](http://nicj.net)
 
@@ -254,6 +254,9 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.3.0 - 2020-0709
+    * Support for namespaced data
+    * Support for Service Worker Start timing
 * v1.2.4 - 2019-07-16
     * Optional `skipDimensions` for `getResourceTiming()` and `compressResourceTiming()`
 * v1.2.3 - 2019-05-09

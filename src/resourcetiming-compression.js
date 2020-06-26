@@ -120,6 +120,11 @@
     // Link attributes
     ResourceTimingCompression.SPECIAL_DATA_LINK_ATTR_TYPE = "4";
 
+    // Namespaced data
+    ResourceTimingCompression.SPECIAL_DATA_NAMESPACED_TYPE = "5";
+
+    // Service worker type
+    ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE = "6";
     /**
      * These are the only `rel` types that might be reference-able from
      * ResourceTiming.
@@ -160,6 +165,20 @@
     ResourceTimingCompression.noConflict = function() {
         root.ResourceTimingCompression = previousObj;
         return ResourceTimingCompression;
+    };
+
+    /**
+     * Rounds up the timing value
+     *
+     * @param {number} time Time
+     * @returns {number} Rounded up timestamp
+     */
+    ResourceTimingCompression.roundUpTiming = function(time) {
+        if (typeof time !== "number") {
+            time = 0;
+        }
+
+        return Math.ceil(time ? time : 0);
     };
 
     /**
@@ -1033,11 +1052,29 @@
                             duration = duration.substring(1);
                         }
                         var lookupKey = ResourceTimingCompression.identifyServerTimingEntry(
-                          serverTiming.indexed[entry.name].index,
-                          serverTiming.indexed[entry.name].descriptions[entry.description]);
+                            serverTiming.indexed[entry.name].index,
+                            serverTiming.indexed[entry.name].descriptions[entry.description]);
                         stData += (entryIndex > 0 ? "," : "") + duration + lookupKey;
                         return stData;
                     }, "");
+            }
+
+            if (e.workerStart && typeof e.workerStart === "number" && e.workerStart !== 0) {
+                // Has Service worker timing data that's non zero. Resource request not intercepted
+                // by Service worker always return 0 as per MDN
+                // https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/workerStart
+
+                // Lets round it and offset from startTime. We are going to round up the workerStart
+                // timing specifically. We are doing this to avoid the issue where the case of Service
+                // worker timestamps being sub-milliseconds more than startTime getting incorrectly
+                // marked as 0ms (due to round down).
+                // We feel marking such cases as 0ms, after rounding down, for workerStart would present
+                // more incorrect indication to the user. Hence the decision to round up.
+                var wsRoudedUp = ResourceTimingCompression.roundUpTiming(e.workerStart);
+                var workerStartOffset = this.trimTiming(wsRoudedUp, e.startTime);
+                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX
+                    + ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE
+                    + this.toBase36(workerStartOffset);
             }
 
             finalUrl = url = this.trimUrl(e.name, this.trimUrls);
@@ -1045,23 +1082,46 @@
                 finalUrl = this.reverseHostname(url);
             }
 
-            // if this entry already exists, add a pipe as a separator
-            if (results[finalUrl] !== undefined) {
-                results[finalUrl] += "|" + data;
-            } else if (visibleEntries[url] !== undefined) {
-                // For the first time we see this URL, add resource dimensions if we have them
-                // We use * as an additional separator to indicate it is not a new resource entry
-                // The following characters will not be URL encoded:
-                // *!-.()~_ but - and . are special to number representation so we don't use them
-                // After the *, the type of special data (ResourceTiming = 0) is added
-                results[finalUrl] =
-                    ResourceTimingCompression.SPECIAL_DATA_PREFIX +
-                    ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE +
-                    visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
-                    + "|"
-                    + data;
+            if (!e.hasOwnProperty("_data")) {
+
+                // if this entry already exists, add a pipe as a separator
+                if (results[finalUrl] !== undefined) {
+                    results[finalUrl] += "|" + data;
+                } else if (visibleEntries[url] !== undefined) {
+                    // For the first time we see this URL, add resource dimensions if we have them
+                    // We use * as an additional separator to indicate it is not a new resource entry
+                    // The following characters will not be URL encoded:
+                    // *!-.()~_ but - and . are special to number representation so we don't use them
+                    // After the *, the type of special data (ResourceTiming = 0) is added
+                    results[finalUrl] =
+                        ResourceTimingCompression.SPECIAL_DATA_PREFIX +
+                        ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE +
+                        visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
+                        + "|"
+                        + data;
+                } else {
+                    results[finalUrl] = data;
+                }
             } else {
-                results[finalUrl] = data;
+                var namespacedData = "";
+                for (var key in e._data) {
+                    if (e._data.hasOwnProperty(key)) {
+                        namespacedData += ResourceTimingCompression.SPECIAL_DATA_PREFIX
+                            + ResourceTimingCompression.SPECIAL_DATA_NAMESPACED_TYPE
+                            + key
+                            + ":"
+                            + e._data[key];
+                    }
+                }
+
+                if (typeof results[url] === "undefined") {
+                    // we haven't seen this resource yet, treat this potential stub as the canonical version
+                    results[url] = data + namespacedData;
+                } else {
+                    // we have seen this resource before
+                    // forget the timing data of `e`, just supplement the previous entry with the new `namespacedData`
+                    results[url] += namespacedData;
+                }
             }
         }
 
@@ -1167,10 +1227,10 @@
             countCollector[name].counts[description1];
             });
 
-      /* eslint no-inline-comments:0 */
+            /* eslint no-inline-comments:0 */
             array.push(sorted.length === 1 && sorted[0] === "" ?
-          name : // special case: no non-empty descriptions
-          [name].concat(sorted));
+                name : // special case: no non-empty descriptions
+                [name].concat(sorted));
             return array;
         }, []);
     };

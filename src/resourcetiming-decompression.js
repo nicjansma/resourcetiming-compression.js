@@ -183,6 +183,9 @@
     // Namespaced data
     ResourceTimingDecompression.SPECIAL_DATA_NAMESPACED_TYPE = "5";
 
+    // Service worker type
+    ResourceTimingDecompression.SPECIAL_DATA_SERVICE_WORKER_TYPE = "6";
+
     // Regular Expression to parse a URL
     ResourceTimingDecompression.HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
 
@@ -844,6 +847,24 @@
     };
 
     /**
+     * Decompresses service worker data
+     *
+     * @param {string} compressed Compressed string
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with decompressed special data
+     */
+    ResourceTimingDecompression.decompressServiceWorkerData = function(compressed, resource) {
+        resource = resource || {};
+
+        if (typeof compressed === "string") {
+            var offset = parseInt(compressed, 36);
+            resource.workerStart = resource.startTime + offset;
+        }
+
+        return resource;
+    };
+
+    /**
      * Decompresses special data such as resource size or script type into the given resource.
      *
      * @param {string} compressed Compressed string
@@ -872,6 +893,8 @@
             resource = this.decompressLinkAttrType(compressed, resource);
         } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_NAMESPACED_TYPE) {
             resource = this.decompressNamespacedData(compressed, resource);
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_SERVICE_WORKER_TYPE) {
+            resource = this.decompressServiceWorkerData(compressed, resource);
         }
 
         return resource;
