@@ -183,6 +183,9 @@
     // Namespaced data
     ResourceTimingDecompression.SPECIAL_DATA_NAMESPACED_TYPE = "5";
 
+    // Service worker type
+    ResourceTimingDecompression.SPECIAL_DATA_SERVICE_WORKER_TYPE = "6";
+
     // Regular Expression to parse a URL
     ResourceTimingDecompression.HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
 
@@ -843,6 +846,16 @@
         return resource;
     };
 
+    ResourceTimingDecompression.decompressServiceWorkerData = function(compressed, resource) {
+        resource = resource || {};
+
+        if (typeof compressed === "string") {
+            var offset = parseInt(compressed, 36);
+            resource.workerStart = resource.startTime + offset;
+        }
+
+        return resource;
+    }
     /**
      * Decompresses special data such as resource size or script type into the given resource.
      *
@@ -872,6 +885,8 @@
             resource = this.decompressLinkAttrType(compressed, resource);
         } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_NAMESPACED_TYPE) {
             resource = this.decompressNamespacedData(compressed, resource);
+        } else if (dataType === SPECIAL_DATA_SERVICE_WORKER_TYPE) {
+            resource = this.decompressServiceWorkerData(compressed, resource);
         }
 
         return resource;

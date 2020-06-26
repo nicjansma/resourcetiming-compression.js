@@ -120,6 +120,11 @@
     // Link attributes
     ResourceTimingCompression.SPECIAL_DATA_LINK_ATTR_TYPE = "4";
 
+    // Namespaced data
+    ResourceTimingCompression.SPECIAL_DATA_NAMESPACED_TYPE = "5";
+
+    // Service worker type
+    ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE = "6";
     /**
      * These are the only `rel` types that might be reference-able from
      * ResourceTiming.
@@ -1040,6 +1045,21 @@
                     }, "");
             }
 
+            if (e.workerStart && typeof e.workerStart === "number" && e.workerStart !== 0) {
+				// Has Service worker timing data that's non zero. Resource request not intercepted
+				// by Service worker always return 0 as per MDN
+				// https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/workerStart
+
+				// Lets round it and offset from startTime. We are going to round up the workerStart
+				// timing specifically. We are doing this to avoid the issue where the case of Service
+				// worker timestamps being sub-milliseconds more than startTime getting incorrectly
+				// marked as 0ms (due to round down).
+				// We feel marking such cases as 0ms, after rounding down, for workerStart would present
+				// more incorrect indication to the user. Hence the decision to round up.
+				var workerStartOffset = this.trimTiming(e.workerStart, e.startTime);
+				data += ResourceTimingCompression.SPECIAL_DATA_PREFIX + ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE + this.toBase36(workerStartOffset);
+			}
+
             finalUrl = url = this.trimUrl(e.name, this.trimUrls);
             if (ResourceTimingCompression.HOSTNAMES_REVERSED) {
                 finalUrl = this.reverseHostname(url);
@@ -1062,6 +1082,25 @@
                     + data;
             } else {
                 results[finalUrl] = data;
+            }
+
+            if (e.hasOwnProperty("_data")) {
+                var namespacedData = "";
+				for (var key in e._data) {
+					if (e._data.hasOwnProperty(key)) {
+						namespacedData += SPECIAL_DATA_PREFIX + SPECIAL_DATA_NAMESPACED_TYPE + key + ":" + e._data[key];
+					}
+				}
+
+				if (typeof results[url] === "undefined") {
+					// we haven't seen this resource yet, treat this potential stub as the canonical version
+					results[url] = data + namespacedData;
+				}
+				else {
+					// we have seen this resource before
+					// forget the timing data of `e`, just supplement the previous entry with the new `namespacedData`
+					results[url] += namespacedData;
+				}
             }
         }
 

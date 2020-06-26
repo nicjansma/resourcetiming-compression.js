@@ -790,6 +790,21 @@
                     servertiming: {}
                 });
             });
+
+            it("Should add workerStart offset", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: 1,
+                    responseEnd: 2,
+                    workerStart: 1000
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "11,1*6" + new Number(999).toString(36)
+                    },
+                    servertiming: {}
+                });
+            });
         });
 
         //

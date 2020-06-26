@@ -527,6 +527,27 @@
         });
 
         //
+        // .decompressServiceWorkerData
+        //
+        describe(".decompressServiceWorkerData()", function() {
+            it("Should add workerStart timestamp", function() {
+                var startTime = new Date().getTime();
+                var offset = 1000;
+                var workerStart = startTime + offset;
+
+                expect({
+                    startTime: startTime,
+                    workerStart: workerStart
+                }).to.eql(ResourceTimingDecompression.decompressServiceWorkerData(
+                    offset.toString(36),
+                    {
+                        startTime: startTime
+                    }
+                ));
+            });
+        });
+
+        //
         // .addContribution
         //
         describe(".addContribution()", function() {
