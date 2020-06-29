@@ -791,16 +791,37 @@
                 });
             });
 
+            it("Should compress resourcetiming namespace data.", function() {
+                var data = { foo: "bar" };
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "link",
+                    startTime: 1,
+                    responseEnd: 2,
+                    linkAttrs: 2,
+                    _data : data
+                }], { lookup: {} })).to.eql({
+                    servertiming: {},
+                    restiming: {
+                        "foo": "21,1*42*5foo:bar"
+                    }
+                });
+            });
+            
             it("Should add workerStart offset", function() {
+                var workerStart = 1000,
+                    startTime = 1,
+                    responseEnd = 2;
+                
                 expect(ResourceTimingCompression.compressResourceTiming(null, [{
                     name: "foo",
                     initiatorType: "img",
-                    startTime: 1,
-                    responseEnd: 2,
-                    workerStart: 1000
+                    startTime: startTime,
+                    responseEnd: responseEnd,
+                    workerStart: workerStart
                 }], { lookup: {} })).to.eql({
                     restiming: {
-                        "foo": "11,1*6" + new Number(999).toString(36)
+                        "foo": "11,1*6" + (workerStart - startTime).toString(36)
                     },
                     servertiming: {}
                 });

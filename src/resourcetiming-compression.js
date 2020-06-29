@@ -1088,7 +1088,7 @@
                 var namespacedData = "";
                 for (var key in e._data) {
                     if (e._data.hasOwnProperty(key)) {
-                        namespacedData += SPECIAL_DATA_PREFIX + SPECIAL_DATA_NAMESPACED_TYPE + key + ":" + e._data[key];
+                        namespacedData += ResourceTimingCompression.SPECIAL_DATA_PREFIX + ResourceTimingCompression.SPECIAL_DATA_NAMESPACED_TYPE + key + ":" + e._data[key];
                     }
                 }
 
