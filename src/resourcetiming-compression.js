@@ -168,6 +168,19 @@
     };
 
     /**
+	 * Rounds up the timing value
+	 *
+	 * @param {number} time Time
+	 * @returns {number} Rounded up timestamp
+	 */
+	ResourceTimingCompression.roundUpTiming = function(time) {
+		if (typeof time !== "number") {
+			time = 0;
+		}
+
+		return Math.ceil(time ? time : 0);
+	}
+    /**
      * Converts entries to a Trie:
      * http://en.wikipedia.org/wiki/Trie
      *
@@ -1056,7 +1069,8 @@
                 // marked as 0ms (due to round down).
                 // We feel marking such cases as 0ms, after rounding down, for workerStart would present
                 // more incorrect indication to the user. Hence the decision to round up.
-                var workerStartOffset = this.trimTiming(e.workerStart, e.startTime);
+                var wsRoudedUp = ResourceTimingCompression.roundUpTiming(e.workerStart);
+                var workerStartOffset = this.trimTiming(wsRoudedUp, e.startTime);
                 data += ResourceTimingCompression.SPECIAL_DATA_PREFIX + ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE + this.toBase36(workerStartOffset);
             }
 
@@ -1064,27 +1078,29 @@
             if (ResourceTimingCompression.HOSTNAMES_REVERSED) {
                 finalUrl = this.reverseHostname(url);
             }
-
-            // if this entry already exists, add a pipe as a separator
-            if (results[finalUrl] !== undefined) {
-                results[finalUrl] += "|" + data;
-            } else if (visibleEntries[url] !== undefined) {
-                // For the first time we see this URL, add resource dimensions if we have them
-                // We use * as an additional separator to indicate it is not a new resource entry
-                // The following characters will not be URL encoded:
-                // *!-.()~_ but - and . are special to number representation so we don't use them
-                // After the *, the type of special data (ResourceTiming = 0) is added
-                results[finalUrl] =
-                    ResourceTimingCompression.SPECIAL_DATA_PREFIX +
-                    ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE +
-                    visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
-                    + "|"
-                    + data;
-            } else {
-                results[finalUrl] = data;
+            
+            if (!e.hasOwnProperty("_data")) {
+			    
+                // if this entry already exists, add a pipe as a separator
+                if (results[finalUrl] !== undefined) {
+                    results[finalUrl] += "|" + data;
+                } else if (visibleEntries[url] !== undefined) {
+                    // For the first time we see this URL, add resource dimensions if we have them
+                    // We use * as an additional separator to indicate it is not a new resource entry
+                    // The following characters will not be URL encoded:
+                    // *!-.()~_ but - and . are special to number representation so we don't use them
+                    // After the *, the type of special data (ResourceTiming = 0) is added
+                    results[finalUrl] =
+                        ResourceTimingCompression.SPECIAL_DATA_PREFIX +
+                        ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE +
+                        visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
+                        + "|"
+                        + data;
+                } else {
+                    results[finalUrl] = data;
+                }
             }
-
-            if (e.hasOwnProperty("_data")) {
+            else {
                 var namespacedData = "";
                 for (var key in e._data) {
                     if (e._data.hasOwnProperty(key)) {
@@ -1101,7 +1117,7 @@
                     // forget the timing data of `e`, just supplement the previous entry with the new `namespacedData`
                     results[url] += namespacedData;
                 }
-            }
+            }       
         }
 
         return {
