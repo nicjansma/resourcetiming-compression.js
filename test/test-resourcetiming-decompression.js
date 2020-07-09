@@ -175,6 +175,33 @@
 
                 expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
             });
+
+            it("should work with workerStart times", function() {
+                var data = {
+                    "abc": "31,b,a,9,8,7,6,5,4,1*62,3"
+                };
+
+                var expected = [{
+                    name: "abc",
+                    initiatorType: "script",
+                    startTime: 1,
+                    redirectStart: 1,
+                    redirectEnd: 2,
+                    fetchStart: 4,
+                    domainLookupStart: 5,
+                    domainLookupEnd: 6,
+                    connectStart: 7,
+                    secureConnectionStart: 8,
+                    connectEnd: 9,
+                    requestStart: 10,
+                    responseStart: 11,
+                    responseEnd: 12,
+                    duration: 11,
+                    workerStart: 3
+                }];
+
+                expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
+            });
         });
 
         //
