@@ -26,7 +26,7 @@
         describe(".decodeCompressedResource()", function() {
             it("should process more than one special datas", function() {
                 var entry = ResourceTimingDecompression.decodeCompressedResource(
-                    "68y,95,7x,5s,5r,,3y,3y,1*1a,a,b*27*3100,:1*41",
+                    "68y,95,7x,5s,5r,,3y,3y,1*1a,a,b*27*3100,:1*41*6a",
                     "http://moc.oof",
                     ["edge", ["cdn-cache", "HIT", "MISS"], "origin"]);
 
@@ -50,6 +50,7 @@
                 expect(entry.scriptDefer).to.be(true);
                 expect(entry.scriptBody).to.be(true);
                 expect(entry.rel).to.be("prefetch");
+                expect(entry.workerStart).to.be(332);
             });
         });
 
@@ -456,15 +457,19 @@
             it("Should handled undefined.", function() {
                 expect({}).to.eql(ResourceTimingDecompression.decompressNamespacedData());
             });
+
             it("Should handle empty string.", function() {
                 expect({}).to.eql(ResourceTimingDecompression.decompressNamespacedData(""));
             });
+
             it("Should handle invalid data.", function() {
                 expect({}).to.eql(ResourceTimingDecompression.decompressNamespacedData("foo"));
             });
+
             it("Should decompress valid data.", function() {
                 expect({ _data: { foo: "bar" } }).to.eql(ResourceTimingDecompression.decompressNamespacedData("foo:bar"));
             });
+
             it("Should decompress valid data (with a semicolon in the value).", function() {
                 expect({ _data: { foo: "bar:baz" } }).to.eql(ResourceTimingDecompression.decompressNamespacedData("foo:bar:baz"));
             });
@@ -475,12 +480,14 @@
                 ResourceTimingDecompression.decompressNamespacedData("b:2", resource);
                 expect({ _data: { a: 1, b: 2 } }).to.eql(resource);
             });
+
             it("Should decompress data with keys that collide twice.", function() {
                 var resource = {};
                 ResourceTimingDecompression.decompressNamespacedData("a:1", resource);
                 ResourceTimingDecompression.decompressNamespacedData("a:2", resource);
                 expect({ _data: { a: [1, 2] } }).to.eql(resource);
             });
+
             it("Should decompress data with keys that collide thrice.", function() {
                 var resource = {};
                 ResourceTimingDecompression.decompressNamespacedData("a:1", resource);
@@ -761,6 +768,7 @@
         //
         describe(".decompressServerTiming()", function() {
             var optimized = [["m0", "d0a", "d0b"], ["m1", "d1a", "d1b"], "m2"];
+
             it("Should resolve to m0-d0a", function() {
                 ["123", "123:0", "123:.0", "123:0.0"].forEach(function(compressed) {
                     expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
@@ -770,6 +778,7 @@
                     });
                 });
             });
+
             it("Should resolve to m0-d0b", function() {
                 ["123:.1", "123:0.1"].forEach(function(compressed) {
                     expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
@@ -779,6 +788,7 @@
                     });
                 });
             });
+
             it("Should resolve to m1-d1a", function() {
                 ["123:1", "123:1.0"].forEach(function(compressed) {
                     expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
@@ -788,6 +798,7 @@
                     });
                 });
             });
+
             it("Should resolve to m1-d1b", function() {
                 ["123:1.1"].forEach(function(compressed) {
                     expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
@@ -797,6 +808,7 @@
                     });
                 });
             });
+
             it("Should resolve to m1-<empty string>", function() {
                 ["123:2"].forEach(function(compressed) {
                     expect(ResourceTimingDecompression.decompressServerTiming(optimized, compressed)).to.eql({
