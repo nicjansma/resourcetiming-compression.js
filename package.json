@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "commander": "^2.9.0",
-    "eslint": "^3.12.2",
+    "eslint": "^4.18.2",
     "eslint-config-nicjansma": "^1.0.2",
     "expect.js": "^0.3.1",
     "gulp": "^3.9.1",
