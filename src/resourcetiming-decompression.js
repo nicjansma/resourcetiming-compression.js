@@ -659,6 +659,7 @@
         var startTime = timings.length >= 1 ? timings[0] : 0;
 
         // fetchStart is either the redirectEnd time, or startTime
+        // NOTE: This may be later modified by Service Worker special data, which has the real timestamp if needed
         var fetchStart = timings.length < 10 ?
             startTime :
             this.decodeCompressedResourceTimeStamp(timings, 9, startTime);
@@ -857,8 +858,15 @@
         resource = resource || {};
 
         if (typeof compressed === "string") {
-            var offset = parseInt(compressed, 36);
+            var splitCompressed = compressed.split(",");
+
+            var offset = parseInt(splitCompressed[0], 36);
             resource.workerStart = resource.startTime + offset;
+
+            // if fetchStart is set, also use that instead of the inferred startTime/redirectEnd
+            if (splitCompressed[1]) {
+                resource.fetchStart = resource.startTime + parseInt(splitCompressed[1], 36);
+            }
         }
 
         return resource;

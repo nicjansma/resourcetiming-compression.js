@@ -1048,7 +1048,7 @@
                     e.serverTiming.reduce(function(stData, entry, entryIndex) { /* eslint no-loop-func:0 */
                         var duration = String(entry.duration);
                         if (duration.substring(0, 2) === "0.") {
-                        // lop off the leading 0
+                            // lop off the leading 0
                             duration = duration.substring(1);
                         }
                         var lookupKey = ResourceTimingCompression.identifyServerTimingEntry(
@@ -1070,11 +1070,16 @@
                 // marked as 0ms (due to round down).
                 // We feel marking such cases as 0ms, after rounding down, for workerStart would present
                 // more incorrect indication to the user. Hence the decision to round up.
-                var wsRoudedUp = ResourceTimingCompression.roundUpTiming(e.workerStart);
-                var workerStartOffset = this.trimTiming(wsRoudedUp, e.startTime);
+                var workerStartOffset = this.trimTiming(
+                    ResourceTimingCompression.roundUpTiming(e.workerStart), e.startTime);
+
+                var fetchStartOffset = this.trimTiming(
+                    ResourceTimingCompression.roundUpTiming(e.fetchStart), e.startTime);
+
                 data += ResourceTimingCompression.SPECIAL_DATA_PREFIX
                     + ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE
-                    + this.toBase36(workerStartOffset);
+                    + this.toBase36(workerStartOffset)
+                    + ((fetchStartOffset !== workerStartOffset) ? ("," + this.toBase36(fetchStartOffset)) : "");
             }
 
             finalUrl = url = this.trimUrl(e.name, this.trimUrls);

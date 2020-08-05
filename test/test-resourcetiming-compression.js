@@ -808,20 +808,46 @@
                 });
             });
 
-            it("Should add workerStart offset", function() {
-                var workerStart = 1000,
-                    startTime = 1,
-                    responseEnd = 2;
+            it("Should add workerStart offset (same as fetchStart)", function() {
+                var startTime = 1,
+                    workerStart = 1000,
+                    responseEnd = 2000;
 
                 expect(ResourceTimingCompression.compressResourceTiming(null, [{
                     name: "foo",
                     initiatorType: "img",
                     startTime: startTime,
                     responseEnd: responseEnd,
-                    workerStart: workerStart
+                    workerStart: workerStart,
+                    fetchStart: workerStart
                 }], { lookup: {} })).to.eql({
                     restiming: {
-                        "foo": "11,1*6" + (workerStart - startTime).toString(36)
+                        "foo": "11,1jj*6" + (workerStart - startTime).toString(36)
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should add workerStart offset (different than fetchStart)", function() {
+                var startTime = 1,
+                    workerStart = 1000,
+                    fetchStart = 1500,
+                    responseEnd = 2000;
+
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: startTime,
+                    responseEnd: responseEnd,
+                    workerStart: workerStart,
+                    fetchStart: fetchStart
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "11,1jj"
+                            + "*6"
+                            + (workerStart - startTime).toString(36)
+                            + ","
+                            + (fetchStart - startTime).toString(36)
                     },
                     servertiming: {}
                 });

@@ -62,7 +62,8 @@ To include resourcetiming-compression.js, simply include it via a script tag:
 <script type="text/javascript" src="resourcetiming-compression.min.js"></script>
 ```
 
-Once included in the page, a top-level `ResourceTimingCompression` object is available on `window`.  If AMD or CommonJS environments are detected, it will simply expose itself via those methods.
+Once included in the page, a top-level `ResourceTimingCompression` object is available on `window`.  If AMD
+or CommonJS environments are detected, it will simply expose itself via those methods.
 
 From the NPM module:
 ```js
@@ -83,7 +84,8 @@ To include resourcetiming-decompression.js, simply include it via a script tag:
 <script type="text/javascript" src="resourcetiming-decompression.min.js"></script>
 ```
 
-Once included in the page, a top-level `ResourceTimingDecompression` object is available on `window`.  If AMD or CommonJS environments are detected, it will simply expose itself via those methods.
+Once included in the page, a top-level `ResourceTimingDecompression` object is available on `window`.  If AMD
+or CommonJS environments are detected, it will simply expose itself via those methods.
 
 From the NPM module:
 ```js
@@ -95,11 +97,150 @@ To decompress your resources, you can simply call:
 var original = ResourceTimingDecompression.decompressResources(restiming, servertiming);
 ```
 
-## Resource Dimensions
+## Compressed Data
 
-If available, when [compressing the resources](http://nicj.net/compressing-resourcetiming/) via `compressResourceTiming()`, any resource that has a visible component on the page (such as an `IMG` element) will have its `height` `width` `top` and `left` values captured and included in the compressed data as well.
+Please see this [blog post](http://nicj.net/compressing-resourcetiming/) for a more detailed description of the compression
+format.
 
-This information is encoded as a "special value" in the resource's timings array.
+### Trie
+
+Each ResourceTiming entry (e.g. URL) is first combined into an [optimized Trie](http://en.wikipedia.org/wiki/Trie):
+
+```
+{
+    "http://": {
+        "foo.com/": {
+            "|": "0,a",
+            "js/foo.js": "370,1z,1c|390,1,2",
+            "css/foo.css": "48c,5k,14*0a"
+        }
+    }
+}
+```
+
+The above Trie contains data for the following URLs:
+
+* `http://foo.com/` (the `|` leaf node)
+* `http://foo.com/js/foo.js` (contains two entries as designated by `|` in the middle of the value)
+* `http://foo.com/css/foo.css`
+
+Some notes:
+
+* A leaf node _key_ of `|` means an entry for the Trie up to that point.
+    This may happen if a URL is a common prefix of other entries.
+    The URL would not contain the `|`.
+* A _value_ containing `|` means the URL has multiple entries (e.g. the same URL has multiple hits)
+* A _value_ containing `*[n]` means "special data" is encoded for that URL, such as dimensions, sizes, Server Timing, etc.
+    See below for more details.
+
+### Initiator Types
+
+The very first character for every ResourceTiming entry is its `initiatorType`.
+
+For example:
+
+```
+{
+    "http://foo.com/js/foo.js": "370,1z,1c"
+}
+```
+
+`3` is the initiator of `foo.js`, which maps to `script`.
+
+The mapping is defined as:
+
+```
+INITIATOR_TYPES = {
+    "other": 0,
+    "img": 1,
+    "link": 2,
+    "script": 3,
+    "css": 4,
+    "xmlhttprequest": 5,
+    "html": 6,
+    "image": 7,
+    "beacon": 8,
+    "fetch": 9,
+    "iframe": "a",
+    "subdocument": "a",
+    "body": "b",
+    "input": "c",
+    "frame": "a",
+    "object": "d",
+    "video": "e",
+    "audio": "f",
+    "source": "g",
+    "track": "h",
+    "embed": "i",
+    "eventsource": "j",
+    "navigation": 6
+}
+```
+
+### Resource Timestamps
+
+After the `initiatorType`, each entry contains the resource's timestamps in the following order:
+
+```
+[initiatorType][startTime],[responseEnd],[responseStart],
+[requestStart],[connectEnd],[secureConnectionStart],[connectStart],
+[domainLookupEnd],[domainLookupStart],[redirectEnd],[redirectStart]
+```
+
+Each entry is [Base36](https://en.wikipedia.org/wiki/Base36) encoded.
+
+`startTime` is the [Base36](https://en.wikipedia.org/wiki/Base36) value of the `startTime` timestamp.
+
+All of the other timestamps are the [Base36](https://en.wikipedia.org/wiki/Base36) value of their offset from `startTime`.
+
+All trailing `,0`s are removed and can be assumed to be the same as `0` or missing when decoding.
+
+For example:
+
+```
+{
+    "http://foo.com/js/foo.js": "370,1z,1c"
+}
+```
+
+Results in:
+
+```
+{
+    "name": "http://blah.com/js/foo.js",
+    "initiatorType": "script",
+    "startTime": 252,
+    "responseEnd": 323,
+    "responseStart": 300
+}
+```
+
+With every other timestamp being `0`.
+
+### Special Data
+
+Additional information about each resource is encoded with special "special data" delimiters (`*[type]`).
+
+The special data types are:
+
+* `0`: Dimensions
+* `1`: Sizes
+* `2`: `<script>` attributes
+* `3`: ServerTiming
+* `4`: `<link rel=>` value
+* `5`: Namespaced data
+* `6`: Service Worker Start time
+
+Details about each special data follows.
+
+### Resource Dimensions
+
+If available, when [compressing the resources](http://nicj.net/compressing-resourcetiming/) via `compressResourceTiming()`,
+any resource that has a visible component on the page (such as an `IMG` element) will have its `height` `width` `top`
+and `left` values captured and included in the compressed data as well.
+
+This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
+list of timings with a special prefix of `*0`.
 
 For each resource, multiple hits to the same URL are separated by a pipe (`|`) character:
 
@@ -110,9 +251,8 @@ For each resource, multiple hits to the same URL are separated by a pipe (`|`) c
 }
 ```
 
-(See the [blog post](http://nicj.net/compressing-resourcetiming/) for a description of how to interpret the values)
-
-If the resource has visible elements on the page, they will be appended to this list of timings with a special prefix of `*0` ([Base36](https://en.wikipedia.org/wiki/Base36) encoded):
+If the resource has visible elements on the page, they will be appended to this list of timings with a special prefix
+of `*0` ([Base36](https://en.wikipedia.org/wiki/Base36) encoded):
 
 ```
 {
@@ -122,11 +262,14 @@ If the resource has visible elements on the page, they will be appended to this 
 }
 ```
 
-## Resource Sizes
+### Resource Sizes
 
-If available via [ResourceTiming2](https://www.w3.org/TR/resource-timing/), when [compressing the resources](http://nicj.net/compressing-resourcetiming/) via `compressResourceTiming()`, the resource's `transferSize`, `encodedBodySize` and `decodedBodySize` will be captured and included in the compressed data as well.
+If available via [ResourceTiming2](https://www.w3.org/TR/resource-timing/), when [compressing the resources](http://nicj.net/compressing-resourcetiming/)
+via `compressResourceTiming()`, the resource's `transferSize`, `encodedBodySize` and `decodedBodySize`
+will be captured and included in the compressed data as well.
 
-This information is encoded as a "special value" in the resource's timings array.  They will be appended to the list of timings with a special prefix of `*1`:
+This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
+list of timings with a special prefix of `*1`.
 
 The data will be stored in the order of: `[e, t, d]`.
 
@@ -141,13 +284,12 @@ The data will be stored in the order of: `[e, t, d]`.
     * If a [Base36](https://en.wikipedia.org/wiki/Base36) encoded number, `d` is the `decodedBodySize` increase in size over `encodedBodySize` (`decodedBodySize = parseInt(e, 36) + parseInt(d, 36)`)
     * If missing, `decodedBodySize` was equal to `encodedBodySize` (the request was not encoded)
 
-Taking the following example:
+For example:
 
 ```
 {
-  // this resource was loaded twice with timings 70,1z,1c and 90,1,2 and had
-  // transferSize
-  "http://blah.com/js/foo.js": "370,1z,1c|390,1,2|*1a,b,c"
+  // this resource was loaded with timings 70,1z,1c and had sizes set
+  "http://blah.com/js/foo.js": "370,1z,1c*1a,b,c"
 }
 ```
 
@@ -157,7 +299,217 @@ Results in:
 * `transferSize` = `parseInt("a", 36) + parseInt("b", 36)` = `21`
 * `decodedBodySize` = `parseInt("a", 36) + parseInt("c", 36)` = `22`
 
-## Resource Contributions
+### Script Data
+
+`<script>` elements have attributes such as `async` and `defer`.  These attributes, plus its location (`<head>`
+or `<body>`) will be included for any `<script>` elements.
+
+This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
+list of timings with a special prefix of `*2`.
+
+The data is encoded as a bitmask:
+
+* `async` attribute has a value of `0x1`
+* `defer` attribute has a value of `0x2`
+* If the `<script>` was in the body, the location will be set to `0x4`.  Otherwise, the script was in the `<head>`
+
+For example:
+
+```
+{
+  // this resource was loaded with timings 70,1z,1c and had script attributes of async/defer/body set
+  "http://blah.com/js/foo.js": "370,1z,1c*27"
+}
+```
+
+### Server Timing
+
+Server Timing entries are included on Resource- and NavigationTiming entries as `serverTiming`.
+They must have a `name`, _might_ have a non-empty `description`, and will likely have a non-zero `duration`.
+This compression is built on the presumption that resources will have Server Timing entries with unique `duration`s 
+pointing mostly to the same `name` and `description`s.
+
+This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
+list of timings with a special prefix of `*3`.
+
+There are two parts to this compression:
+
+1. A "lookup" data structure containing all of the unique `name` and `description` pairs (an array of arrays, sorted with most-common first)
+2. For each resource timing entry, a list of duration and key pairs, where duration is the `duration` of the
+    Server Timing entry and the key maps to the name and description in (1)
+
+For example:
+
+```javascript
+performance.getEntriesByName(<path/to/resource1>)[0].serverTiming === [{
+  name: 'm1',
+  duration: 1,
+  description: 'desc1'
+}, {
+  name: 'm2',
+  duration: 2,
+  description: 'desc3'
+}]
+
+performance.getEntriesByName(<path/to/resource2>)[0].serverTiming === [{
+  name: 'm1',
+  duration: 3,
+  description: 'desc1'
+}, {
+  name: 'm1',
+  duration: 4,
+  description: 'desc2'
+}]
+```
+
+* `getResourceTiming()` will return a `servertiming` "lookup" will all of the unique pairs of name and description, equal to:
+
+    `[[m1, desc1, desc2], [m2, desc3]]`
+
+* We supplement the compressed resource timing data with comma-separated list of the form: `<duration>:<entryIndex>.<descriptionIndex>`.
+    * For "resource1", we add: `1:0.0,2:1.0`
+    * For "resource2", we add: `3:0.0,4:0.1`
+
+* To save bytes, we will omit the zeroes, and irrelevant separators. So, from our example:
+    * For "resource1", we add: `1,2:1`
+    * For "resource2", we add: `3,4:.1`
+
+* And lastly, were there only one `description` for a given `name` and it was empty-string, then we simplify that array entry:
+
+    `[["description1", ""], ...]` would become `["description1", ...]`
+
+For example:
+
+```
+{
+  // this resource was loaded with timings 70,1z,1c and had ServerTimings
+  "http://blah.com/js/foo.js": "370,1z,1c*3100,:1"
+}
+```
+
+With `servertiming` data of:
+
+```
+["edge", ["cdn-cache", "HIT", "MISS"], "origin"]
+```
+
+Results in two ServerTiming entries:
+
+```
+[
+    {
+        name: "edge",
+        description: "",
+        duration: 100
+    },
+    {
+        name: "cdn-cache",
+        description: "HIT",
+        duration: 0
+    }
+]
+```
+
+### LINK type
+
+`<link>` elements have attributes such as `rel`.  Known `rel` types will be included for any `<link>` elements.
+
+This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
+list of timings with a special prefix of `*4`.
+
+```
+REL_TYPES = {
+    "prefetch": 1,
+    "preload": 2,
+    "prerender": 3,
+    "stylesheet": 4
+};
+```
+
+For example:
+
+```
+{
+  // this resource was loaded with timings 70,1z,1c and had a known link rel
+  "http://blah.com/js/foo.js": "270,1z,1c*41"
+}
+```
+
+Results in:
+
+* `foo.js` was a `<link>` node (`initiatorType` = `2`) and was a `prefetch`
+
+### Namespaced data
+
+Namespaced data can be used to extend ResourceTiming compression with any other data that is desired.
+
+If the `ResourceTiming` entry itself has a `_data` attribute, the key/value pairs will be included in the compressed 
+ResourceTiming data.
+
+This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
+list of timings with a special prefix of `*5`.
+
+For example:
+
+```
+{
+  // this resource was loaded with timings 70,1z,1c and had a known link rel
+  "http://blah.com/js/foo.js": "270,1z,1c*5abc:123,def:z"
+}
+```
+
+Results in:
+
+```
+{
+    "name": "http://blah.com/js/foo.js",
+    "initiatorType": "script",
+    "startTime": 252,
+    "responseEnd": 323,
+    "responseStart": 300,
+    "_data": {
+        "abc": "123",
+        "def": "z"
+    }
+}
+```
+
+### Service Worker Timing
+
+ResourceTiming's [`workerStart`](https://www.w3.org/TR/resource-timing-2/#dom-performanceresourcetiming-workerstart)
+timestamp is when the Service Worker was started, if active.  The difference between `workerStart` and `fetchStart`
+is how long it took the Service Worker to startup.
+
+`workerStart` was not included in the original ResourceTiming Compression timestamp array, so it is included after
+the regular timestamps as a "special value" if available.  The data will be appended to the list of timings with
+a special prefix of `*6`:
+
+```
+*6[Base36(workerStart-startTime)],[Base36(fetchStart-startTime)]
+```
+
+Note that both `workerStart` and `fetchStart` are included in this data, as `fetchStart` is not normally included
+in the ResourceTiming Compression timestamp array: it can be inferred to be `startTime` or `redirectEnd` if there
+was no Service Worker active.
+
+For example:
+
+```
+{
+  // this resource has Service Worker workerStart timing
+  "abc": "31,b*62,3"
+}
+```
+
+Results in:
+
+* `initiatorType` = `3` = `script`
+* `startTime` = `parseInt("1", 36)` = `1`
+* `responseEnd` = `parseInt("b", 36) + startTime` = `12`
+* `workerStart` = `parseInt("2", 36) + startTime` = `3`
+* `fetchStart` = `parseInt("3", 36) + startTime` = `4`
+
+### Resource Contributions
 
 We call contribution of a resource to a page the proportion of the total load time that can be blamed on that resource.
 We want contribution scores to encourage parallelization and not only short resources.
@@ -194,52 +546,6 @@ ResourceTimingDecompression.addContribution(original);
 // Resources in "original" now have a field "contribution".
 ```
 
-## Server Timing
-Server Timing entries are included on Resource- and NavigationTiming entries as `serverTiming`. They must have a `name`, _might_ have a non-empty `description`, and will likely have a non-zero `duration`. This compression is build on the presumption that resources will have server timing entries with unique `duration`s pointing mostly to the same `name` and `description`s. There are two parts to this compression:
-
-1. A "lookup" data structure containing all of the unique `name` and `description` pairs (an array of arrays, sorted with most-common first)
-2. For each resource timing entry, a list of duration and key pairs, where duration is the `duration` of the server timing entry and the key maps to the name and description in (1)
-
-Take the following example:
-```javascript
-performance.getEntriesByName(<path/to/resource1>)[0].serverTiming === [{
-  name: 'm1',
-  duration: 1,
-  description: 'desc1'
-}, {
-  name: 'm2',
-  duration: 2,
-  description: 'desc3'
-}]
-
-performance.getEntriesByName(<path/to/resource2>)[0].serverTiming === [{
-  name: 'm1',
-  duration: 3,
-  description: 'desc1'
-}, {
-  name: 'm1',
-  duration: 4,
-  description: 'desc2'
-}]
-
-```
-
-* `getResourceTiming()` will return a `servertiming` "lookup" will all of the unique pairs of name and description, equal to:
-
-    `[[m1, desc1, desc2], [m2, desc3]]`
-
-* We supplement the compressed resource timing data with comma-separated list of the form: `<duration>:<entryIndex>.<descriptionIndex>`.
-    * For "resource1", we add: `1:0.0,2:1.0`
-    * For "resource2", we add: `3:0.0,4:0.1`
-
-* To save bytes, we will omit the zeroes, and irrelevant separators. So, from our example:
-    * For "resource1", we add: `1,2:1`
-    * For "resource2", we add: `3,4:.1`
-
-* And lastly, were there only one `description` for a given `name` and it was empty-string, then we simplify that array entry:
-
-    `[["description1", ""], ...]` would become `["description1", ...]`
-
 ## Tests
 
 ### resourcetiming-compression.js tests
@@ -255,7 +561,7 @@ Or via ``gulp``:
 ## Version History
 
 * v1.3.0 - 2020-0709
-    * Support for namespaced data
+    * Support for compressing namespaced data
     * Support for Service Worker Start timing
 * v1.2.4 - 2019-07-16
     * Optional `skipDimensions` for `getResourceTiming()` and `compressResourceTiming()`
