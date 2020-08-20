@@ -402,9 +402,7 @@
         //
         describe(".addDimension()", function() {
             it("Should return an empty object, because there is no dimension data.", function() {
-                expect(
-                {}
-                ).to.eql(ResourceTimingDecompression.addDimension({}, {}));
+                expect({}).to.eql(ResourceTimingDecompression.addDimension({}, {}));
             });
 
             it("Should not modify the resource because dimensionData is undefined.", function() {

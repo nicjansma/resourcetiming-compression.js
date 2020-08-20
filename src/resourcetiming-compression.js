@@ -141,7 +141,7 @@
     };
 
     // Regular Expression to parse a URL
-    ResourceTimingCompression.HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
+    ResourceTimingCompression.HOSTNAME_REGEX = /^(https?:\/\/)([^/]+)(.*)/;
 
     /**
      * List of URLs (strings or regexs) to trim

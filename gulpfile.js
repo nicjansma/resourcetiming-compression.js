@@ -11,21 +11,21 @@
     var fs = require("fs");
 
     gulp.task("lint", function() {
-        gulp.src(["*.js", "src/*.js", "test/*.js"])
+        return gulp.src(["*.js", "src/*.js", "test/*.js"])
             .pipe(eslint())
             .pipe(eslint.format())
             .pipe(eslint.failAfterError());
     });
 
     gulp.task("lint:build", function() {
-        gulp.src(["*.js", "src/*.js", "test/*.js"])
+        return gulp.src(["*.js", "src/*.js", "test/*.js"])
             .pipe(eslint())
             .pipe(eslint.format())
             .pipe(eslint.format("checkstyle", fs.createWriteStream("eslint.xml")));
     });
 
     gulp.task("compress", function() {
-        gulp.src("src/*.js")
+        return gulp.src("src/*.js")
             .pipe(rename({
                 suffix: ".min"
             }))
@@ -41,26 +41,26 @@
             .pipe(mocha());
     });
 
-    gulp.task("mocha-tap", ["mocha"], function() {
+    gulp.task("mocha-tap", gulp.series("mocha", function() {
         return gulp.src("test/test-*.js",
             {
                 read: false
             })
-        .pipe(mocha({
-            reporter: "tap",
-            output: "./test/mocha.tap"
-        }));
-    });
+            .pipe(mocha({
+                reporter: "tap",
+                output: "./test/mocha.tap"
+            }));
+    }));
 
-    gulp.task("karma", ["mocha", "mocha-tap"], function(done) {
+    gulp.task("karma", gulp.series("mocha", "mocha-tap", function(done) {
         new Server({
             configFile: path.join(__dirname, "karma.config.js"),
             singleRun: true
         }, done).start();
-    });
+    }));
 
-    gulp.task("all", ["default"]);
-    gulp.task("test", ["mocha", "mocha-tap", "karma"]);
-    gulp.task("default", ["lint", "lint:build", "compress", "test"]);
-    gulp.task("travis", ["default"]);
+    gulp.task("test", gulp.series("mocha", "mocha-tap", "karma"));
+    gulp.task("default", gulp.series("lint", "lint:build", "compress", "test"));
+    gulp.task("all", gulp.series("default"));
+    gulp.task("travis", gulp.series("default"));
 }());

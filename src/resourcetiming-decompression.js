@@ -187,7 +187,7 @@
     ResourceTimingDecompression.SPECIAL_DATA_SERVICE_WORKER_TYPE = "6";
 
     // Regular Expression to parse a URL
-    ResourceTimingDecompression.HOSTNAME_REGEX = /^(https?:\/\/)([^\/]+)(.*)/;
+    ResourceTimingDecompression.HOSTNAME_REGEX = /^(https?:\/\/)([^/]+)(.*)/;
 
     //
     // Functions
@@ -810,13 +810,13 @@
         return resource;
     };
 
-  /**
-   * Decompresses namespaced data back into the specified resource
-   *
-   * @param {string} compressed Compressed string
-   * @param {ResourceTiming} resource ResourceTiming object
-   * @returns {ResourceTiming} ResourceTiming object with namespaced data
-   */
+    /**
+     * Decompresses namespaced data back into the specified resource
+     *
+     * @param {string} compressed Compressed string
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with namespaced data
+     */
     ResourceTimingDecompression.decompressNamespacedData = function(compressed, resource) {
         resource = resource || {};
 

@@ -11,6 +11,8 @@
         //
 
         // disabled for use of _jQuery
-        "no-underscore-dangle": 0
+        "no-underscore-dangle": 0,
+        "no-prototype-builtins": 0,
+        "no-control-regex": 0
     }
 }
