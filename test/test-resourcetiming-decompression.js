@@ -26,7 +26,7 @@
         describe(".decodeCompressedResource()", function() {
             it("should process more than one special datas", function() {
                 var entry = ResourceTimingDecompression.decodeCompressedResource(
-                    "68y,95,7x,5s,5r,,3y,3y,1*1a,a,b*27*3100,:1*41*6a",
+                    "68y,95,7x,5s,5r,,3y,3y,1*1a,a,b*27*3100,:1*41*6a*7h1.1",
                     "http://moc.oof",
                     ["edge", ["cdn-cache", "HIT", "MISS"], "origin"]);
 
@@ -51,6 +51,7 @@
                 expect(entry.scriptBody).to.be(true);
                 expect(entry.rel).to.be("prefetch");
                 expect(entry.workerStart).to.be(332);
+                expect(entry.nextHopProtocol).to.be("http/1.1");
             });
         });
 
@@ -403,7 +404,7 @@
         describe(".addDimension()", function() {
             it("Should return an empty object, because there is no dimension data.", function() {
                 expect(
-                {}
+                    {}
                 ).to.eql(ResourceTimingDecompression.addDimension({}, {}));
             });
 
@@ -909,6 +910,35 @@
             it("should set rel='stylesheet' attributes", function() {
                 expect(ResourceTimingDecompression.decompressLinkAttrType("4")).to.eql({
                     rel: "stylesheet"
+                });
+            });
+        });
+
+        //
+        // .decompressNextHopProtocol
+        //
+        describe(".decompressNextHopProtocol()", function() {
+            it("should set nextHopProtocol='' when missing", function() {
+                expect(ResourceTimingDecompression.decompressNextHopProtocol()).to.eql({
+                    nextHopProtocol: ""
+                });
+            });
+
+            it("should set nextHopProtocol='http/1.1' for 'h1.1'", function() {
+                expect(ResourceTimingDecompression.decompressNextHopProtocol("h1.1")).to.eql({
+                    nextHopProtocol: "http/1.1"
+                });
+            });
+
+            it("should set nextHopProtocol='h2' for 'h2'", function() {
+                expect(ResourceTimingDecompression.decompressNextHopProtocol("h2")).to.eql({
+                    nextHopProtocol: "h2"
+                });
+            });
+
+            it("should set nextHopProtocol='h3' for 'h3'", function() {
+                expect(ResourceTimingDecompression.decompressNextHopProtocol("h3")).to.eql({
+                    nextHopProtocol: "h3"
                 });
             });
         });

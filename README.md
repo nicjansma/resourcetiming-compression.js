@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.3.1
+v1.3.2
 
 [http://nicj.net](http://nicj.net)
 
@@ -230,6 +230,7 @@ The special data types are:
 * `4`: `<link rel=>` value
 * `5`: Namespaced data
 * `6`: Service Worker Start time
+* `7`: `nextHopProtocol` data
 
 Details about each special data follows.
 
@@ -509,6 +510,20 @@ Results in:
 * `workerStart` = `parseInt("2", 36) + startTime` = `3`
 * `fetchStart` = `parseInt("3", 36) + startTime` = `4`
 
+### `nextHopProtocol` data
+
+ResourceTiming's [`nextHopProtocol`](https://www.w3.org/TR/resource-timing-2/#dom-performanceresourcetiming-nexthopprotocol)
+is the final connection's ALPN negotiated protocol, such as `http/1.1`, `h2` or `h3`.
+
+Note: `http/` is replaced with `h` so `http/1` is consistent with H2 and H3.
+
+The data will be appended to the list of timings with
+a special prefix of `*7`:
+
+```
+*7[h1|h1.1|h2|h3|...]
+```
+
 ### Resource Contributions
 
 We call contribution of a resource to a page the proportion of the total load time that can be blamed on that resource.
@@ -560,6 +575,9 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.3.2 - 2022-08-30
+    * Add `nextHopProtocol` data
+    * Upgrade some package dependencies
 * v1.3.1 - 2020-08-05
     * Add `fetchStart` for Service Worker Startup data
 * v1.3.0 - 2020-07-09
