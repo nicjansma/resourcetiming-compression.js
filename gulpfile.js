@@ -41,7 +41,7 @@
             .pipe(mocha());
     });
 
-    gulp.task("mocha-tap", function() {
+    gulp.task("mocha-tap", gulp.series("mocha", function() {
         return gulp.src("test/test-*.js",
             {
                 read: false
@@ -50,14 +50,14 @@
                 reporter: "tap",
                 output: "./test/mocha.tap"
             }));
-    });
+    }));
 
-    gulp.task("karma", function(done) {
+    gulp.task("karma", gulp.series("mocha", "mocha-tap", function(done) {
         new Server({
             configFile: path.join(__dirname, "karma.config.js"),
             singleRun: true
         }, done).start();
-    });
+    }));
 
     gulp.task("test", gulp.series("mocha", "mocha-tap", "karma"));
     gulp.task("default", gulp.series("lint", "lint:build", "compress", "test"));
