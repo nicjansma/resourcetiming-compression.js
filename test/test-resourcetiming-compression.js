@@ -853,6 +853,29 @@
                 });
             });
 
+            it("Should add trimmed workerStart offset (different than fetchStart)", function() {
+                var startTime = 1,
+                    workerStart = 1000,
+                    fetchStart = 1,
+                    responseEnd = 2000;
+
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: startTime,
+                    responseEnd: responseEnd,
+                    workerStart: workerStart,
+                    fetchStart: fetchStart
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "11,1jj"
+                            + "*6"
+                            + (workerStart - startTime).toString(36)
+                    },
+                    servertiming: {}
+                });
+            });
+
             it("Should compress http/1.1 nextHopProtocol data", function() {
                 expect(ResourceTimingCompression.compressResourceTiming(null, [{
                     name: "foo",

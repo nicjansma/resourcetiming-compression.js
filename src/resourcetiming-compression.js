@@ -1117,7 +1117,9 @@
                 data += ResourceTimingCompression.SPECIAL_DATA_PREFIX
                     + ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE
                     + this.toBase36(workerStartOffset)
-                    + ((fetchStartOffset !== workerStartOffset) ? ("," + this.toBase36(fetchStartOffset)) : "");
+                    + ((fetchStartOffset !== workerStartOffset) ?
+                        ("," + this.toBase36(fetchStartOffset)).replace(/,+$/, "") : "");
+
             }
 
             finalUrl = url = this.trimUrl(e.name, this.trimUrls);
