@@ -96,13 +96,10 @@
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(3)).to.be("script");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(4)).to.be("css");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(5)).to.be("xmlhttprequest");
-                // expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(6)).to.be("html");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(6)).to.be("navigation");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(7)).to.be("image");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(8)).to.be("beacon");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(9)).to.be("fetch");
-                // expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("a")).to.be("iframe");
-                // expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("a")).to.be("subdocument");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("a")).to.be("frame");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("b")).to.be("body");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("c")).to.be("input");
