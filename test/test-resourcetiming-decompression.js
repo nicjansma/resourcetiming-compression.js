@@ -96,6 +96,23 @@
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(3)).to.be("script");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(4)).to.be("css");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(5)).to.be("xmlhttprequest");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(6)).to.be("navigation");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(7)).to.be("image");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(8)).to.be("beacon");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(9)).to.be("fetch");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("a")).to.be("frame");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("b")).to.be("body");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("c")).to.be("input");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("d")).to.be("object");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("e")).to.be("video");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("f")).to.be("audio");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("g")).to.be("source");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("h")).to.be("track");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("i")).to.be("embed");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("j")).to.be("eventsource");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("k")).to.be("early-hints");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("l")).to.be("ping");
+                expect(ResourceTimingDecompression.getInitiatorTypeFromIndex("m")).to.be("font");
             });
         });
 

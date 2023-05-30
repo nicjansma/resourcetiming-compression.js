@@ -173,7 +173,10 @@ INITIATOR_TYPES = {
     "track": "h",
     "embed": "i",
     "eventsource": "j",
-    "navigation": 6
+    "navigation": 6,
+    "early-hints": "k",
+    "ping": "l",
+    "font": "m"
 }
 ```
 

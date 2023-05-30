@@ -920,6 +920,48 @@
                     servertiming: {}
                 });
             });
+
+            it("Should compress initiatorType early-hints data", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "early-hints",
+                    startTime: 1,
+                    responseEnd: 2
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "k1,1"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should compress initiatorType ping data", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "ping",
+                    startTime: 1,
+                    responseEnd: 2
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "l1,1"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should compress initiatorType font data", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "font",
+                    startTime: 1,
+                    responseEnd: 2
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "m1,1"
+                    },
+                    servertiming: {}
+                });
+            });
         });
 
         //

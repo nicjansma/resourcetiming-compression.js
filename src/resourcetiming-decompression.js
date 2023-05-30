@@ -47,23 +47,19 @@
         /** XMLHttpRequest */
         "xmlhttprequest": 5,
         /** The root HTML page itself */
-        "html": 6,
+        "navigation": 6,
         /** IMAGE element inside a SVG */
         "image": 7,
         /** [sendBeacon]{@link https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon} */
         "beacon": 8,
         /** [Fetch API]{@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API} */
         "fetch": 9,
-        /** An IFRAME */
-        "iframe": "a",
-        /** IE11 and Edge (some versions) send "subdocument" instead of "iframe" */
-        "subdocument": "a",
+        /** FRAME element */
+        "frame": "a",
         /** BODY element */
         "body": "b",
         /** INPUT element */
         "input": "c",
-        /** FRAME element */
-        "frame": "a",
         /** OBJECT element */
         "object": "d",
         /** VIDEO element */
@@ -78,8 +74,12 @@
         "embed": "i",
         /** EventSource */
         "eventsource": "j",
-        /** The root HTML page itself */
-        "navigation": 6
+        /** Early Hints */
+        "early-hints": "k",
+        /** HTML <a> ping Attribute */
+        "ping": "l",
+        /** CSS font at-rule */
+        "font": "m"
     };
 
     /**
