@@ -21,7 +21,7 @@
     "eslint": "^8.23.0",
     "eslint-config-nicjansma": "^1.0.2",
     "expect.js": "^0.3.1",
-    "gulp": "^4.0.2",
+    "gulp": "^5.0.0",
     "gulp-eslint": "^6.0.0",
     "gulp-mocha": "^8.0.0",
     "gulp-rename": "^2.0.0",
