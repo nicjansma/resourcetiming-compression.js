@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.3.1
+v1.3.3
 
 [http://nicj.net](http://nicj.net)
 
@@ -32,13 +32,15 @@ NOTE: `resourcetiming-compression.js` is the same code that drives the `restimin
 
 Releases are available for download from [GitHub](https://github.com/nicjansma/resourcetiming-compression.js).
 
-__Development:__ [resourcetiming-compression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-compression.js) - 30kb
+**Development:** [resourcetiming-compression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-compression.js) - 30kb
 
-__Production:__ [resourcetiming-compression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-compression.min.js) - 2.4kb (minified / gzipped)
+**Production:** [resourcetiming-compression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-compression.min.js)
+    - 2.4kb (minified / gzipped)
 
-__Development:__ [resourcetiming-decompression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-decompression.js) - 8.8kb
+**Development:** [resourcetiming-decompression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-decompression.js) - 8.8kb
 
-__Production:__ [resourcetiming-decompression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-decompression.min.js) - 1kb (minified / gzipped)
+**Production:** [resourcetiming-decompression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-decompression.min.js)
+    - 1kb (minified / gzipped)
 
 resourcetiming-compression.js is also available as the [npm resourcetiming-compression module](https://npmjs.org/package/resourcetiming-compression). You can install
 using  Node Package Manager (npm):
@@ -66,6 +68,7 @@ Once included in the page, a top-level `ResourceTimingCompression` object is ava
 or CommonJS environments are detected, it will simply expose itself via those methods.
 
 From the NPM module:
+
 ```js
 var ResourceTimingCompression = require("resourcetiming-compression").ResourceTimingCompression;
 ```
@@ -88,9 +91,11 @@ Once included in the page, a top-level `ResourceTimingDecompression` object is a
 or CommonJS environments are detected, it will simply expose itself via those methods.
 
 From the NPM module:
+
 ```js
 var ResourceTimingDecompression = require("resourcetiming-compression").ResourceTimingDecompression;
 ```
+
 To decompress your resources, you can simply call:
 
 ```js
@@ -106,7 +111,7 @@ format.
 
 Each ResourceTiming entry (e.g. URL) is first combined into an [optimized Trie](http://en.wikipedia.org/wiki/Trie):
 
-```
+```json
 {
     "http://": {
         "foo.com/": {
@@ -139,7 +144,7 @@ The very first character for every ResourceTiming entry is its `initiatorType`.
 
 For example:
 
-```
+```json
 {
     "http://foo.com/js/foo.js": "370,1z,1c"
 }
@@ -149,7 +154,7 @@ For example:
 
 The mapping is defined as:
 
-```
+```js
 INITIATOR_TYPES = {
     "other": 0,
     "img": 1,
@@ -173,7 +178,10 @@ INITIATOR_TYPES = {
     "track": "h",
     "embed": "i",
     "eventsource": "j",
-    "navigation": 6
+    "navigation": 6,
+    "early-hints": "k",
+    "ping": "l",
+    "font": "m"
 }
 ```
 
@@ -181,7 +189,7 @@ INITIATOR_TYPES = {
 
 After the `initiatorType`, each entry contains the resource's timestamps in the following order:
 
-```
+```text
 [initiatorType][startTime],[responseEnd],[responseStart],
 [requestStart],[connectEnd],[secureConnectionStart],[connectStart],
 [domainLookupEnd],[domainLookupStart],[redirectEnd],[redirectStart]
@@ -197,7 +205,7 @@ All trailing `,0`s are removed and can be assumed to be the same as `0` or missi
 
 For example:
 
-```
+```json
 {
     "http://foo.com/js/foo.js": "370,1z,1c"
 }
@@ -205,7 +213,7 @@ For example:
 
 Results in:
 
-```
+```json
 {
     "name": "http://blah.com/js/foo.js",
     "initiatorType": "script",
@@ -230,6 +238,7 @@ The special data types are:
 * `4`: `<link rel=>` value
 * `5`: Namespaced data
 * `6`: Service Worker Start time
+* `7`: `nextHopProtocol` data
 
 Details about each special data follows.
 
@@ -244,7 +253,7 @@ list of timings with a special prefix of `*0`.
 
 For each resource, multiple hits to the same URL are separated by a pipe (`|`) character:
 
-```
+```json
 {
   // this resource was loaded twice with timings 70,1z,1c and 90,1,2
   "http://blah.com/js/foo.js": "370,1z,1c|390,1,2"
@@ -254,7 +263,7 @@ For each resource, multiple hits to the same URL are separated by a pipe (`|`) c
 If the resource has visible elements on the page, they will be appended to this list of timings with a special prefix
 of `*0` ([Base36](https://en.wikipedia.org/wiki/Base36) encoded):
 
-```
+```json
 {
   // this resource was loaded twice with timings 70,1z,1c and 90,1,2 and had
   // dimensions of height = 1, width = 5, top = 10 and left = 11
@@ -286,7 +295,7 @@ The data will be stored in the order of: `[e, t, d]`.
 
 For example:
 
-```
+```json
 {
   // this resource was loaded with timings 70,1z,1c and had sizes set
   "http://blah.com/js/foo.js": "370,1z,1c*1a,b,c"
@@ -315,7 +324,7 @@ The data is encoded as a bitmask:
 
 For example:
 
-```
+```json
 {
   // this resource was loaded with timings 70,1z,1c and had script attributes of async/defer/body set
   "http://blah.com/js/foo.js": "370,1z,1c*27"
@@ -326,7 +335,7 @@ For example:
 
 Server Timing entries are included on Resource- and NavigationTiming entries as `serverTiming`.
 They must have a `name`, _might_ have a non-empty `description`, and will likely have a non-zero `duration`.
-This compression is built on the presumption that resources will have Server Timing entries with unique `duration`s 
+This compression is built on the presumption that resources will have Server Timing entries with unique `duration`s
 pointing mostly to the same `name` and `description`s.
 
 This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
@@ -380,7 +389,7 @@ performance.getEntriesByName(<path/to/resource2>)[0].serverTiming === [{
 
 For example:
 
-```
+```json
 {
   // this resource was loaded with timings 70,1z,1c and had ServerTimings
   "http://blah.com/js/foo.js": "370,1z,1c*3100,:1"
@@ -389,13 +398,13 @@ For example:
 
 With `servertiming` data of:
 
-```
+```json
 ["edge", ["cdn-cache", "HIT", "MISS"], "origin"]
 ```
 
 Results in two ServerTiming entries:
 
-```
+```json
 [
     {
         name: "edge",
@@ -417,7 +426,7 @@ Results in two ServerTiming entries:
 This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
 list of timings with a special prefix of `*4`.
 
-```
+```js
 REL_TYPES = {
     "prefetch": 1,
     "preload": 2,
@@ -428,7 +437,7 @@ REL_TYPES = {
 
 For example:
 
-```
+```json
 {
   // this resource was loaded with timings 70,1z,1c and had a known link rel
   "http://blah.com/js/foo.js": "270,1z,1c*41"
@@ -443,7 +452,7 @@ Results in:
 
 Namespaced data can be used to extend ResourceTiming compression with any other data that is desired.
 
-If the `ResourceTiming` entry itself has a `_data` attribute, the key/value pairs will be included in the compressed 
+If the `ResourceTiming` entry itself has a `_data` attribute, the key/value pairs will be included in the compressed
 ResourceTiming data.
 
 This information is encoded as a "special value" in the resource's timings array.  They will be appended to the
@@ -451,7 +460,7 @@ list of timings with a special prefix of `*5`.
 
 For example:
 
-```
+```json
 {
   // this resource was loaded with timings 70,1z,1c and had a known link rel
   "http://blah.com/js/foo.js": "270,1z,1c*5abc:123,def:z"
@@ -460,7 +469,7 @@ For example:
 
 Results in:
 
-```
+```json
 {
     "name": "http://blah.com/js/foo.js",
     "initiatorType": "script",
@@ -484,7 +493,7 @@ is how long it took the Service Worker to startup.
 the regular timestamps as a "special value" if available.  The data will be appended to the list of timings with
 a special prefix of `*6`:
 
-```
+```text
 *6[Base36(workerStart-startTime)],[Base36(fetchStart-startTime)]
 ```
 
@@ -494,7 +503,7 @@ was no Service Worker active.
 
 For example:
 
-```
+```json
 {
   // this resource has Service Worker workerStart timing
   "abc": "31,b*62,3"
@@ -509,6 +518,20 @@ Results in:
 * `workerStart` = `parseInt("2", 36) + startTime` = `3`
 * `fetchStart` = `parseInt("3", 36) + startTime` = `4`
 
+### `nextHopProtocol` data
+
+ResourceTiming's [`nextHopProtocol`](https://www.w3.org/TR/resource-timing-2/#dom-performanceresourcetiming-nexthopprotocol)
+is the final connection's ALPN negotiated protocol, such as `http/1.1`, `h2` or `h3`.
+
+Note: `http/` is replaced with `h` so `http/1` is consistent with H2 and H3.
+
+The data will be appended to the list of timings with
+a special prefix of `*7`:
+
+```text
+*7[h1|h1.1|h2|h3|...]
+```
+
 ### Resource Contributions
 
 We call contribution of a resource to a page the proportion of the total load time that can be blamed on that resource.
@@ -518,7 +541,7 @@ It enables us to study resource impact in a more meaningful way over simply look
 
 Here is an example with only 2 resources to get some intuition into how it works:
 
-```
+```text
     0                                        100ms
 A   |-----------------------------------------|
 
@@ -560,6 +583,12 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.3.3 - 2023-05-30
+    * Add new initiator types: early-hints, ping, font
+    * Fix workerStart extra trailing commas
+* v1.3.2 - 2022-08-30
+    * Add `nextHopProtocol` data
+    * Upgrade some package dependencies
 * v1.3.1 - 2020-08-05
     * Add `fetchStart` for Service Worker Startup data
 * v1.3.0 - 2020-07-09

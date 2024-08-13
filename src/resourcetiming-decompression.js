@@ -47,23 +47,19 @@
         /** XMLHttpRequest */
         "xmlhttprequest": 5,
         /** The root HTML page itself */
-        "html": 6,
+        "navigation": 6,
         /** IMAGE element inside a SVG */
         "image": 7,
         /** [sendBeacon]{@link https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon} */
         "beacon": 8,
         /** [Fetch API]{@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API} */
         "fetch": 9,
-        /** An IFRAME */
-        "iframe": "a",
-        /** IE11 and Edge (some versions) send "subdocument" instead of "iframe" */
-        "subdocument": "a",
+        /** FRAME element */
+        "frame": "a",
         /** BODY element */
         "body": "b",
         /** INPUT element */
         "input": "c",
-        /** FRAME element */
-        "frame": "a",
         /** OBJECT element */
         "object": "d",
         /** VIDEO element */
@@ -78,8 +74,12 @@
         "embed": "i",
         /** EventSource */
         "eventsource": "j",
-        /** The root HTML page itself */
-        "navigation": 6
+        /** Early Hints */
+        "early-hints": "k",
+        /** HTML <a> ping Attribute */
+        "ping": "l",
+        /** CSS font at-rule */
+        "font": "m"
     };
 
     /**
@@ -128,7 +128,7 @@
     ResourceTimingDecompression.getRevMap = function(origMap) {
         var revMap = {};
         for (var key in origMap) {
-            if (origMap.hasOwnProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(origMap, key)) {
                 revMap[origMap[key]] = key;
             }
         }
@@ -188,6 +188,9 @@
 
     // Regular Expression to parse a URL
     ResourceTimingDecompression.HOSTNAME_REGEX = /^(https?:\/\/)([^/]+)(.*)/;
+
+    // Next Hop Protocol
+    ResourceTimingDecompression.SPECIAL_DATA_PROTOCOL = "7";
 
     //
     // Functions
@@ -297,7 +300,7 @@
 
         for (var key in rt) {
             // skip over inherited properties
-            if (!rt.hasOwnProperty(key)) {
+            if (!Object.prototype.hasOwnProperty.call(rt, key)) {
                 continue;
             }
 
@@ -411,10 +414,10 @@
         }
 
         // If naturalHeight and naturalWidth are missing, then they are the same as height and width
-        if (!dimensionData.hasOwnProperty("naturalHeight")) {
+        if (!Object.prototype.hasOwnProperty.call(dimensionData, "naturalHeight")) {
             dimensionData.naturalHeight = dimensionData.height;
         }
-        if (!dimensionData.hasOwnProperty("naturalWidth")) {
+        if (!Object.prototype.hasOwnProperty.call(dimensionData, "naturalWidth")) {
             dimensionData.naturalWidth = dimensionData.width;
         }
 
@@ -437,8 +440,8 @@
 
         // Add all the dimensions to our resource.
         for (var key in this.DIMENSION_NAMES) {
-            if (this.DIMENSION_NAMES.hasOwnProperty(key) &&
-                dimensionData.hasOwnProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(this.DIMENSION_NAMES, key) &&
+                Object.prototype.hasOwnProperty.call(dimensionData, key)) {
                 resource[key] = dimensionData[key];
             }
         }
@@ -613,7 +616,7 @@
      * @returns {string} initiatorType, or "other" if not known
      */
     ResourceTimingDecompression.getInitiatorTypeFromIndex = function(index) {
-        if (this.REV_INITIATOR_TYPES.hasOwnProperty(index)) {
+        if (Object.prototype.hasOwnProperty.call(this.REV_INITIATOR_TYPES, index)) {
             return this.REV_INITIATOR_TYPES[index];
         }
 
@@ -726,7 +729,7 @@
         }
 
         for (var key in this.SCRIPT_ATTRIBUTES) {
-            if (this.SCRIPT_ATTRIBUTES.hasOwnProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(this.SCRIPT_ATTRIBUTES, key)) {
                 resource[key] = (data & this.SCRIPT_ATTRIBUTES[key]) === this.SCRIPT_ATTRIBUTES[key];
             }
         }
@@ -748,7 +751,7 @@
             resource = {};
         }
 
-        if (this.REV_REL_TYPES.hasOwnProperty(data)) {
+        if (Object.prototype.hasOwnProperty.call(this.REV_REL_TYPES, data)) {
             resource.rel = this.REV_REL_TYPES[data];
         }
 
@@ -828,7 +831,7 @@
                 var value = compressed.substring(colon + delimiter.length);
 
                 resource._data = resource._data || {};
-                if (resource._data.hasOwnProperty(key)) {
+                if (Object.prototype.hasOwnProperty.call(resource._data, key)) {
                     // we are adding our 2nd or nth value (n > 2) for this key
                     if (!Array.isArray(resource._data[key])) {
                         // we are adding our 2nd value for this key, convert to array before pushing
@@ -903,6 +906,8 @@
             resource = this.decompressNamespacedData(compressed, resource);
         } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_SERVICE_WORKER_TYPE) {
             resource = this.decompressServiceWorkerData(compressed, resource);
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_PROTOCOL) {
+            resource = this.decompressNextHopProtocol(compressed, resource);
         }
 
         return resource;
@@ -992,6 +997,30 @@
             duration: duration,
             description: description
         };
+    };
+
+    /**
+     * Decompress a nextHopProtocol value
+     *
+     * @param {string} compressed Compressed nextHopProtocol key
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with nextHopProtocol set
+     */
+    ResourceTimingDecompression.decompressNextHopProtocol = function(compressed, resource) {
+        resource = resource || {};
+
+        if (!compressed) {
+            resource.nextHopProtocol = "";
+            return resource;
+        }
+
+        if (compressed.substr(0, 2) === "h1") {
+            resource.nextHopProtocol = compressed.replace(/^h1/, "http/1");
+        } else {
+            resource.nextHopProtocol = compressed;
+        }
+
+        return resource;
     };
 
     //

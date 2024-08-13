@@ -79,7 +79,13 @@
         /** EventSource */
         "eventsource": "j",
         /** The root HTML page itself */
-        "navigation": 6
+        "navigation": 6,
+        /** Early Hints */
+        "early-hints": "k",
+        /** HTML <a> ping Attribute */
+        "ping": "l",
+        /** CSS font at-rule */
+        "font": "m"
     };
 
     // Words that will be broken (by ensuring the optimized trie doesn't contain
@@ -125,6 +131,10 @@
 
     // Service worker type
     ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE = "6";
+
+    // Next Hop Protocol
+    ResourceTimingCompression.SPECIAL_DATA_PROTOCOL = "7";
+
     /**
      * These are the only `rel` types that might be reference-able from
      * ResourceTiming.
@@ -201,7 +211,7 @@
         var trie = {}, url, urlFixed, i, value, letters, letter, cur, node;
 
         for (url in entries) {
-            if (!entries.hasOwnProperty(url)) {
+            if (!Object.prototype.hasOwnProperty.call(entries, url)) {
                 continue;
             }
 
@@ -259,7 +269,7 @@
         var keys = [];
 
         for (node in cur) {
-            if (cur.hasOwnProperty(node)) {
+            if (Object.prototype.hasOwnProperty.call(cur, node)) {
                 keys.push(node);
             }
         }
@@ -461,7 +471,8 @@
                         requestStart: navEntry.requestStart,
                         responseStart: navEntry.responseStart,
                         responseEnd: navEntry.responseEnd,
-                        serverTiming: navEntry.serverTiming || []
+                        serverTiming: navEntry.serverTiming || [],
+                        nextHopProtocol: navEntry.nextHopProtocol
                     });
                 } else if (frame.performance.timing) {
                     // add a fake entry from the timing object
@@ -503,6 +514,7 @@
 
             for (i = 0; frameEntries && i < frameEntries.length; i++) {
                 t = frameEntries[i];
+
                 rtEntry = {
                     name: t.name,
                     initiatorType: t.initiatorType,
@@ -517,7 +529,8 @@
                     connectEnd: t.connectEnd ? (t.connectEnd + offset) : 0,
                     requestStart: t.requestStart ? (t.requestStart + offset) : 0,
                     responseStart: t.responseStart ? (t.responseStart + offset) : 0,
-                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0
+                    responseEnd: t.responseEnd ? (t.responseEnd + offset) : 0,
+                    nextHopProtocol: t.nextHopProtocol
                 };
 
                 if (t.encodedBodySize || t.decodedBodySize || t.transferSize) {
@@ -583,6 +596,7 @@
         // If this is a link, set its flags
         if (entry.initiatorType === "link" && links[entry.name]) {
             // split on ASCII whitespace
+            // eslint-disable-next-line no-control-regex
             links[entry.name].rel.split(/[\u0009\u000A\u000C\u000D\u0020]+/).find(function(rel) {
                 // eslint-disable-line no-loop-func
                 // `rel`s are case insensitive
@@ -971,6 +985,36 @@
     };
 
     /**
+    * Guesses whether or not a resource is a cache hit.
+    *
+    * We can get this directly from the beacon if it has ResourceTiming2 sizing
+    * data, and the resource is same-origin or has TAO.
+    *
+    * For all other cases, we have to guess based on the timing
+    *
+    * @param {PerformanceResourceTiming} entry ResourceTiming entry
+    *
+    * @returns {boolean} True if we estimate it was a cache hit.
+    */
+    ResourceTimingCompression.isCacheHit = function(entry) {
+        // if we transferred bytes, it must not be a cache hit
+        // (will return false for 304 Not Modified)
+        if (entry.transferSize > 0) {
+            return false;
+        }
+
+        // if the body size is non-zero, it must mean this is a
+        // ResourceTiming2 browser, this was same-origin or TAO,
+        // and transferSize was 0, so it was in the cache
+        if (entry.decodedBodySize > 0) {
+            return true;
+        }
+
+        // fall back guessing based on duration (non-RT2 or cross-origin)
+        return entry.duration < 30;
+    };
+
+    /**
      * Optimizes the specified set of performance entries.
      * @param {Window} win The Window
      * @param {object} entries Performance entries
@@ -1030,13 +1074,13 @@
                     compSize;
             }
 
-            if (e.hasOwnProperty("scriptAttrs")) {
+            if (Object.prototype.hasOwnProperty.call(e, "scriptAttrs")) {
                 data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
                     ResourceTimingCompression.SPECIAL_DATA_SCRIPT_TYPE +
                     e.scriptAttrs;
             }
 
-            if (e.hasOwnProperty("linkAttrs")) {
+            if (Object.prototype.hasOwnProperty.call(e, "linkAttrs")) {
                 data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
                     ResourceTimingCompression.SPECIAL_DATA_LINK_ATTR_TYPE +
                     e.linkAttrs;
@@ -1079,7 +1123,9 @@
                 data += ResourceTimingCompression.SPECIAL_DATA_PREFIX
                     + ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE
                     + this.toBase36(workerStartOffset)
-                    + ((fetchStartOffset !== workerStartOffset) ? ("," + this.toBase36(fetchStartOffset)) : "");
+                    + ((fetchStartOffset !== workerStartOffset) ?
+                        ("," + this.toBase36(fetchStartOffset)).replace(/,+$/, "") : "");
+
             }
 
             finalUrl = url = this.trimUrl(e.name, this.trimUrls);
@@ -1087,8 +1133,17 @@
                 finalUrl = this.reverseHostname(url);
             }
 
-            if (!e.hasOwnProperty("_data")) {
+            // nextHopProtocol handling
+            if (Object.prototype.hasOwnProperty.call(e, "nextHopProtocol") &&
+                e.nextHopProtocol !== "" &&
+                !ResourceTimingCompression.isCacheHit(e)) {
+                // change http/1.1 to h1.1 to be consistent with h2 & h3.
+                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX
+                    + ResourceTimingCompression.SPECIAL_DATA_PROTOCOL
+                    + e.nextHopProtocol.replace("http/", "h");
+            }
 
+            if (!Object.prototype.hasOwnProperty.call(e, "_data")) {
                 // if this entry already exists, add a pipe as a separator
                 if (results[finalUrl] !== undefined) {
                     results[finalUrl] += "|" + data;
@@ -1110,7 +1165,7 @@
             } else {
                 var namespacedData = "";
                 for (var key in e._data) {
-                    if (e._data.hasOwnProperty(key)) {
+                    if (Object.prototype.hasOwnProperty.call(e._data, key)) {
                         namespacedData += ResourceTimingCompression.SPECIAL_DATA_PREFIX
                             + ResourceTimingCompression.SPECIAL_DATA_NAMESPACED_TYPE
                             + key

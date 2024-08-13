@@ -3,7 +3,7 @@
   "description": "ResourceTiming compression and decompression",
   "main": "./index.js",
   "author": "Nic Jansma",
-  "version": "1.3.1",
+  "version": "1.3.3",
   "repository": {
     "type": "git",
     "url": "http://github.com/nicjansma/resourcetiming-compression.js.git"
@@ -18,12 +18,12 @@
   "devDependencies": {
     "bower": "^1.8.14",
     "commander": "^2.9.0",
-    "eslint": "^3.12.2",
+    "eslint": "^8.23.0",
     "eslint-config-nicjansma": "^1.0.2",
     "expect.js": "^0.3.1",
     "gulp": "^4.0.2",
     "gulp-eslint": "^6.0.0",
-    "gulp-mocha": "^7.0.2",
+    "gulp-mocha": "^8.0.0",
     "gulp-rename": "^2.0.0",
     "gulp-spawn-mocha": "^6.0.0",
     "gulp-uglify": "^3.0.2",

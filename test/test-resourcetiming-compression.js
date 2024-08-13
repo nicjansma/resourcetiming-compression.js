@@ -852,6 +852,116 @@
                     servertiming: {}
                 });
             });
+
+            it("Should add trimmed workerStart offset (different than fetchStart)", function() {
+                var startTime = 1,
+                    workerStart = 1000,
+                    fetchStart = 1,
+                    responseEnd = 2000;
+
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: startTime,
+                    responseEnd: responseEnd,
+                    workerStart: workerStart,
+                    fetchStart: fetchStart
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "11,1jj"
+                            + "*6"
+                            + (workerStart - startTime).toString(36)
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should compress http/1.1 nextHopProtocol data", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "link",
+                    startTime: 1,
+                    responseEnd: 2,
+                    nextHopProtocol: "http/1.1"
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "21,1*7h1.1"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should compress h3 nextHopProtocol data", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "link",
+                    startTime: 1,
+                    responseEnd: 2,
+                    nextHopProtocol: "h3"
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "21,1*7h3"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should not have nextHopProtocol data if empty", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "link",
+                    startTime: 1,
+                    responseEnd: 2,
+                    nextHopProtocol: ""
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "21,1"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should compress initiatorType early-hints data", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "early-hints",
+                    startTime: 1,
+                    responseEnd: 2
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "k1,1"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should compress initiatorType ping data", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "ping",
+                    startTime: 1,
+                    responseEnd: 2
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "l1,1"
+                    },
+                    servertiming: {}
+                });
+            });
+
+            it("Should compress initiatorType font data", function() {
+                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                    name: "foo",
+                    initiatorType: "font",
+                    startTime: 1,
+                    responseEnd: 2
+                }], { lookup: {} })).to.eql({
+                    restiming: {
+                        "foo": "m1,1"
+                    },
+                    servertiming: {}
+                });
+            });
         });
 
         //
@@ -957,6 +1067,50 @@
                 expect(scaledImage.y).to.be.undefined;
                 expect(scaledImage.naturalHeight).to.be.undefined;
                 expect(scaledImage.naturalWidth).to.be.undefined;
+            });
+        });
+
+        //
+        // .isCacheHit
+        //
+        describe(".isCacheHit()", function() {
+            it("Should return false if transferSize > 0", function() {
+                expect(ResourceTimingCompression.isCacheHit({
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: 1,
+                    transferSize: 100,
+                    duration: 100
+                })).to.be.true;
+            });
+
+            it("Should return false if transferSize == 0 and decodedBodySize != 0", function() {
+                expect(ResourceTimingCompression.isCacheHit({
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: 1,
+                    transferSize: 0,
+                    decodedBodySize: 100,
+                    duration: 100
+                })).to.be.false;
+            });
+
+            it("Should return true if sizes are missing and duration < 30", function() {
+                expect(ResourceTimingCompression.isCacheHit({
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: 1,
+                    duration: 10
+                })).to.be.true;
+            });
+
+            it("Should return false if sizes are missing and duration >= 30", function() {
+                expect(ResourceTimingCompression.isCacheHit({
+                    name: "foo",
+                    initiatorType: "img",
+                    startTime: 1,
+                    duration: 100
+                })).to.be.false;
             });
         });
     });
