@@ -9,6 +9,7 @@
     var Server = require("karma").Server;
     var path = require("path");
     var fs = require("fs");
+    var gls = require("gulp-live-server");
 
     gulp.task("lint", function() {
         return gulp.src(["*.js", "src/*.js", "test/*.js"])
@@ -59,7 +60,14 @@
         }, done).start();
     }));
 
+    gulp.task("server", function() {
+        var server = gls.new("./test/server.js");
+
+        return server.start();
+    });
+
     gulp.task("test", gulp.series("mocha", "mocha-tap", "karma"));
+    gulp.task("test:debug", gulp.series("server"));
     gulp.task("default", gulp.series("lint", "lint:build", "compress", "test"));
     gulp.task("all", gulp.series("default"));
     gulp.task("travis", gulp.series("default"));
