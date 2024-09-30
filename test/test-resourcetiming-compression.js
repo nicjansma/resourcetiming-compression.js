@@ -63,16 +63,16 @@
         // .toBase36
         //
         describe(".toBase36()", function() {
-            it("should return the base 36 equivalent of 100", function() {
+            it("Should return the base 36 equivalent of 100", function() {
                 expect(ResourceTimingCompression.toBase36(100)).to.be("2s");
             });
 
-            it("should return the input if the input is a string", function() {
+            it("Should return the input if the input is a string", function() {
                 expect(ResourceTimingCompression.toBase36("")).to.be("");
                 expect(ResourceTimingCompression.toBase36("a")).to.be("a");
             });
 
-            it("should return an empty string if the input is not a number or string", function() {
+            it("Should return an empty string if the input is not a number or string", function() {
                 expect(ResourceTimingCompression.toBase36()).to.be("");
                 expect(ResourceTimingCompression.toBase36(null)).to.be("");
             });
@@ -82,19 +82,19 @@
         // .trimTiming
         //
         describe(".trimTiming()", function() {
-            it("should handle 0", function() {
+            it("Should handle 0", function() {
                 expect(ResourceTimingCompression.trimTiming(0)).to.be(0);
             });
 
-            it("should handle undefined", function() {
+            it("Should handle undefined", function() {
                 expect(ResourceTimingCompression.trimTiming()).to.be(0);
             });
 
-            it("should handle non-numbers", function() {
+            it("Should handle non-numbers", function() {
                 expect(ResourceTimingCompression.trimTiming("a")).to.be(0);
             });
 
-            it("should round to the nearest number", function() {
+            it("Should round to the nearest number", function() {
                 expect(ResourceTimingCompression.trimTiming(0, 0)).to.be(0);
                 expect(ResourceTimingCompression.trimTiming(100, 0)).to.be(100);
                 expect(ResourceTimingCompression.trimTiming(100.5, 0)).to.be(101);
@@ -102,7 +102,7 @@
                 expect(ResourceTimingCompression.trimTiming(100.99, 0)).to.be(101);
             });
 
-            it("should round when given a navtiming offset", function() {
+            it("Should round when given a navtiming offset", function() {
                 expect(ResourceTimingCompression.trimTiming(100)).to.be(100);
                 expect(ResourceTimingCompression.trimTiming(100, 1)).to.be(99);
                 expect(ResourceTimingCompression.trimTiming(100.12, 1.12)).to.be(99);
@@ -115,7 +115,7 @@
         // .convertToTrie
         //
         describe(".convertToTrie()", function() {
-            it("should convert a single node", function() {
+            it("Should convert a single node", function() {
                 var data = { "abc": "abc" };
                 var expected = {
                     "a": {
@@ -127,7 +127,7 @@
                 expect(ResourceTimingCompression.convertToTrie(data)).to.eql(expected);
             });
 
-            it("should convert a two-node tree whose nodes don't intersect", function() {
+            it("Should convert a two-node tree whose nodes don't intersect", function() {
                 var data = { "abc": "abc", "xyz": "xyz" };
                 var expected = {
                     "a": {
@@ -144,7 +144,7 @@
                 expect(ResourceTimingCompression.convertToTrie(data)).to.eql(expected);
             });
 
-            it("should convert a complex tree", function() {
+            it("Should convert a complex tree", function() {
                 var data = { "abc": "abc", "abcd": "abcd", "ab": "ab" };
                 var expected = {
                     "a": {
@@ -165,7 +165,7 @@
         // .optimizeTrie
         //
         describe(".optimizeTrie()", function() {
-            it("should optimize a single-node tree", function() {
+            it("Should optimize a single-node tree", function() {
                 var data = { "abc": "abc" };
                 var expected = {
                     "abc": "abc"
@@ -176,7 +176,7 @@
                 expect(ResourceTimingCompression.optimizeTrie(trie, true)).to.eql(expected);
             });
 
-            it("should optimize a simple tree", function() {
+            it("Should optimize a simple tree", function() {
                 var data = { "abc": "abc", "xyz": "xyz" };
                 var expected = {
                     "abc": "abc",
@@ -188,7 +188,7 @@
                 expect(ResourceTimingCompression.optimizeTrie(trie, true)).to.eql(expected);
             });
 
-            it("should optimize a complex tree", function() {
+            it("Should optimize a complex tree", function() {
                 var data = { "abc": "abc", "abcd": "abcd", "ab": "ab" };
                 var expected = {
                     "ab":
@@ -791,7 +791,7 @@
                 });
             });
 
-            it("Should compress resourcetiming namespace data.", function() {
+            it("Should compress resourcetiming namespace data", function() {
                 var data = { foo: "bar" };
                 expect(ResourceTimingCompression.compressResourceTiming(null, [{
                     name: "foo",
@@ -808,158 +808,464 @@
                 });
             });
 
-            it("Should add workerStart offset (same as fetchStart)", function() {
-                var startTime = 1,
-                    workerStart = 1000,
-                    responseEnd = 2000;
+            describe(".workerStart", function() {
+                it("Should add workerStart offset (same as fetchStart)", function() {
+                    var startTime = 1,
+                        workerStart = 1000,
+                        responseEnd = 2000;
 
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "img",
-                    startTime: startTime,
-                    responseEnd: responseEnd,
-                    workerStart: workerStart,
-                    fetchStart: workerStart
-                }], { lookup: {} })).to.eql({
-                    restiming: {
-                        "foo": "11,1jj*6" + (workerStart - startTime).toString(36)
-                    },
-                    servertiming: {}
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "img",
+                        startTime: startTime,
+                        responseEnd: responseEnd,
+                        workerStart: workerStart,
+                        fetchStart: workerStart
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "11,1jj*6" + (workerStart - startTime).toString(36)
+                        },
+                        servertiming: {}
+                    });
+                });
+
+                it("Should add workerStart offset (different than fetchStart)", function() {
+                    var startTime = 1,
+                        workerStart = 1000,
+                        fetchStart = 1500,
+                        responseEnd = 2000;
+
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "img",
+                        startTime: startTime,
+                        responseEnd: responseEnd,
+                        workerStart: workerStart,
+                        fetchStart: fetchStart
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "11,1jj"
+                                + "*6"
+                                + (workerStart - startTime).toString(36)
+                                + ","
+                                + (fetchStart - startTime).toString(36)
+                        },
+                        servertiming: {}
+                    });
+                });
+
+                it("Should add trimmed workerStart offset (different than fetchStart)", function() {
+                    var startTime = 1,
+                        workerStart = 1000,
+                        fetchStart = 1,
+                        responseEnd = 2000;
+
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "img",
+                        startTime: startTime,
+                        responseEnd: responseEnd,
+                        workerStart: workerStart,
+                        fetchStart: fetchStart
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "11,1jj"
+                                + "*6"
+                                + (workerStart - startTime).toString(36)
+                        },
+                        servertiming: {}
+                    });
                 });
             });
 
-            it("Should add workerStart offset (different than fetchStart)", function() {
-                var startTime = 1,
-                    workerStart = 1000,
-                    fetchStart = 1500,
-                    responseEnd = 2000;
+            describe(".nextHopProtocol", function() {
+                // test for all known values
+                for (var value in ResourceTimingCompression.nextHopProtocolMap.vals) {
+                    if (Object.prototype.hasOwnProperty.call(ResourceTimingCompression.nextHopProtocolMap.vals, value)) {
+                        (function(nhp) {
+                            it("Should compress nextHopProtocol " + nhp + " (enumerated)", function() {
+                                var expectedVal = ResourceTimingCompression.nextHopProtocolMap.vals[nhp] === 0 ?
+                                    "" : ResourceTimingCompression.nextHopProtocolMap.vals[nhp];
 
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "img",
-                    startTime: startTime,
-                    responseEnd: responseEnd,
-                    workerStart: workerStart,
-                    fetchStart: fetchStart
-                }], { lookup: {} })).to.eql({
-                    restiming: {
-                        "foo": "11,1jj"
-                            + "*6"
-                            + (workerStart - startTime).toString(36)
-                            + ","
-                            + (fetchStart - startTime).toString(36)
-                    },
-                    servertiming: {}
+                                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                                    name: "foo",
+                                    initiatorType: "link",
+                                    startTime: 1,
+                                    responseEnd: 2,
+                                    nextHopProtocol: nhp
+                                }], { lookup: {} })).to.eql({
+                                    restiming: {
+                                        "foo": "21,1*7" + expectedVal
+                                    },
+                                    servertiming: {}
+                                });
+                            });
+                        }(value));
+                    }
+                }
+
+                // specific indexes that shouldn't change
+                it("Should compress http/1.1 nextHopProtocol data", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "link",
+                        startTime: 1,
+                        responseEnd: 2,
+                        nextHopProtocol: "h2"
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "21,1*7"
+                        },
+                        servertiming: {}
+                    });
+                });
+
+                it("Should compress http/1.1 nextHopProtocol data", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "link",
+                        startTime: 1,
+                        responseEnd: 2,
+                        nextHopProtocol: "http/1.1"
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "21,1*73"
+                        },
+                        servertiming: {}
+                    });
+                });
+
+                it("Should compress h3 nextHopProtocol data", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "link",
+                        startTime: 1,
+                        responseEnd: 2,
+                        nextHopProtocol: "h3"
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "21,1*75"
+                        },
+                        servertiming: {}
+                    });
+                });
+
+                it("Should not have nextHopProtocol data if empty", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "link",
+                        startTime: 1,
+                        responseEnd: 2,
+                        nextHopProtocol: ""
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "21,1"
+                        },
+                        servertiming: {}
+                    });
+                });
+
+                it("Should compress unknown nextHopProtocol data", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "link",
+                        startTime: 1,
+                        responseEnd: 2,
+                        nextHopProtocol: "unknown"
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "21,1*76"
+                        },
+                        servertiming: {}
+                    });
                 });
             });
 
-            it("Should add trimmed workerStart offset (different than fetchStart)", function() {
-                var startTime = 1,
-                    workerStart = 1000,
-                    fetchStart = 1,
-                    responseEnd = 2000;
+            describe(".initiatorType", function() {
+                it("Should compress initiatorType early-hints data", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "early-hints",
+                        startTime: 1,
+                        responseEnd: 2
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "k1,1"
+                        },
+                        servertiming: {}
+                    });
+                });
 
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "img",
-                    startTime: startTime,
-                    responseEnd: responseEnd,
-                    workerStart: workerStart,
-                    fetchStart: fetchStart
-                }], { lookup: {} })).to.eql({
-                    restiming: {
-                        "foo": "11,1jj"
-                            + "*6"
-                            + (workerStart - startTime).toString(36)
-                    },
-                    servertiming: {}
+                it("Should compress initiatorType ping data", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "ping",
+                        startTime: 1,
+                        responseEnd: 2
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "l1,1"
+                        },
+                        servertiming: {}
+                    });
+                });
+
+                it("Should compress initiatorType font data", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2
+                    }], { lookup: {} })).to.eql({
+                        restiming: {
+                            "foo": "m1,1"
+                        },
+                        servertiming: {}
+                    });
                 });
             });
 
-            it("Should compress http/1.1 nextHopProtocol data", function() {
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "link",
-                    startTime: 1,
-                    responseEnd: 2,
-                    nextHopProtocol: "http/1.1"
-                }], { lookup: {} })).to.eql({
-                    restiming: {
-                        "foo": "21,1*7h1.1"
-                    },
-                    servertiming: {}
+            describe(".contentType", function() {
+                // test for all known values
+                for (var value in ResourceTimingCompression.contentTypeMap.vals) {
+                    if (Object.prototype.hasOwnProperty.call(ResourceTimingCompression.contentTypeMap.vals, value)) {
+                        (function(ct) {
+                            it("Should compress contentType " + ct + " (enumerated)", function() {
+                                var expectedVal = ResourceTimingCompression.contentTypeMap.vals[ct] === 0 ?
+                                    "" : ResourceTimingCompression.contentTypeMap.vals[ct];
+
+                                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                                    name: "foo",
+                                    initiatorType: "link",
+                                    startTime: 1,
+                                    responseEnd: 2,
+                                    contentType: ct
+                                }], { lookup: {} }).restiming).to.eql({
+                                    "foo": "21,1*8" + expectedVal.toString(36)
+                                });
+                            });
+                        }(value));
+                    }
+                }
+
+                // specific indexes that shouldn't change
+                it("Should compress contentType application/json", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        contentType: "application/json"
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*8"
+                    });
+                });
+
+                it("Should compress contentType text/html", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        contentType: "text/html"
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*8c"
+                    });
+                });
+
+                it("Should compress contentType text/javascript", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        contentType: "text/javascript"
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*8d"
+                    });
+                });
+
+                it("Should compress contentType text/css", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        contentType: "text/css"
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*8b"
+                    });
+                });
+
+                it("Should compress contentType text/blah (new, twice)", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        contentType: "text/blah"
+                    }, {
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        contentType: "text/blah"
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*8f|m1,1*8f"
+                    });
                 });
             });
 
-            it("Should compress h3 nextHopProtocol data", function() {
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "link",
-                    startTime: 1,
-                    responseEnd: 2,
-                    nextHopProtocol: "h3"
-                }], { lookup: {} })).to.eql({
-                    restiming: {
-                        "foo": "21,1*7h3"
-                    },
-                    servertiming: {}
+            describe(".deliveryType", function() {
+                // test for all known values
+                for (var value in ResourceTimingCompression.deliveryTypeMap.vals) {
+                    if (Object.prototype.hasOwnProperty.call(ResourceTimingCompression.deliveryTypeMap.vals, value)) {
+                        (function(dt) {
+                            it("Should compress deliveryType " + dt + " (enumerated)", function() {
+                                var expectedVal = ResourceTimingCompression.deliveryTypeMap.vals[dt] === 0 ?
+                                    "" : ResourceTimingCompression.deliveryTypeMap.vals[dt];
+
+                                expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                                    name: "foo",
+                                    initiatorType: "link",
+                                    startTime: 1,
+                                    responseEnd: 2,
+                                    deliveryType: dt
+                                }], { lookup: {} }).restiming).to.eql({
+                                    "foo": "21,1*9" + expectedVal.toString(36)
+                                });
+                            });
+                        }(value));
+                    }
+                }
+
+                // specific indexes that shouldn't change
+                it("Should compress deliveryType cache", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        deliveryType: "cache"
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*9"
+                    });
+                });
+
+                it("Should compress deliveryType fake (new, twice)", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        deliveryType: "fake"
+                    }, {
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        deliveryType: "fake"
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*92|m1,1*92"
+                    });
                 });
             });
 
-            it("Should not have nextHopProtocol data if empty", function() {
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "link",
-                    startTime: 1,
-                    responseEnd: 2,
-                    nextHopProtocol: ""
-                }], { lookup: {} })).to.eql({
-                    restiming: {
-                        "foo": "21,1"
-                    },
-                    servertiming: {}
+            describe(".renderBlockingStatus", function() {
+                it("Should compress renderBlockingStatus = 'blocking'", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        renderBlockingStatus: "blocking"
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*a"
+                    });
                 });
-            });
 
-            it("Should compress initiatorType early-hints data", function() {
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "early-hints",
-                    startTime: 1,
-                    responseEnd: 2
-                }], { lookup: {} })).to.eql({
-                    restiming: {
-                        "foo": "k1,1"
-                    },
-                    servertiming: {}
-                });
-            });
-
-            it("Should compress initiatorType ping data", function() {
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "ping",
-                    startTime: 1,
-                    responseEnd: 2
-                }], { lookup: {} })).to.eql({
-                    restiming: {
-                        "foo": "l1,1"
-                    },
-                    servertiming: {}
-                });
-            });
-
-            it("Should compress initiatorType font data", function() {
-                expect(ResourceTimingCompression.compressResourceTiming(null, [{
-                    name: "foo",
-                    initiatorType: "font",
-                    startTime: 1,
-                    responseEnd: 2
-                }], { lookup: {} })).to.eql({
-                    restiming: {
+                it("Should compress renderBlockingStatus = 'non-blocking'", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        renderBlockingStatus: "non-blocking"
+                    }], { lookup: {} }).restiming).to.eql({
                         "foo": "m1,1"
-                    },
-                    servertiming: {}
+                    });
+                });
+
+                it("Should compress renderBlockingStatus (missing)", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1"
+                    });
+                });
+            });
+
+            describe(".responseStatus", function() {
+                it("Should compress responseStatus = 200", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        responseStatus: 200
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1"
+                    });
+                });
+
+                it("Should compress responseStatus = 204", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        responseStatus: 204
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*b5o"
+                    });
+                });
+
+                it("Should compress responseStatus = 404", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        responseStatus: 404
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*bb8"
+                    });
+                });
+
+                it("Should compress responseStatus = 410", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2,
+                        responseStatus: 410
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1*bbe"
+                    });
+                });
+
+                it("Should compress responseStatus (missing)", function() {
+                    expect(ResourceTimingCompression.compressResourceTiming(null, [{
+                        name: "foo",
+                        initiatorType: "font",
+                        startTime: 1,
+                        responseEnd: 2
+                    }], { lookup: {} }).restiming).to.eql({
+                        "foo": "m1,1"
+                    });
                 });
             });
         });

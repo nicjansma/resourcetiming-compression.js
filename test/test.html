@@ -13,7 +13,7 @@
     <body>
         <div id="mocha"></div>
         <img src="test.png?natural" />
-        <img src="test.png?scaled" height="100" width="100" />
+        <img src="test.png?scaled" height="100" width="100" style="position: absolute; top: 1000px; left: 200px" />
         <script>
             var img = new Image();
             img.src = "test.png?script";
@@ -24,7 +24,9 @@
         <script src="test-resourcetiming-compression.js"></script>
         <script src="test-resourcetiming-decompression.js"></script>
         <script>
-            window.addEventListener("load", mocha.run);
+            window.addEventListener("load", function() {
+                mocha.run();
+            });
         </script>
   </body>
 </html>

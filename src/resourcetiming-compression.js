@@ -106,13 +106,13 @@
     // but something else (like dimension data)
     ResourceTimingCompression.SPECIAL_DATA_PREFIX = "*";
 
-    // Dimension data special type
+    // Dimension data
     ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE = "0";
 
-    // Dimension data special type
+    // Size data
     ResourceTimingCompression.SPECIAL_DATA_SIZE_TYPE = "1";
 
-    // Dimension data special type
+    // Script attributes
     ResourceTimingCompression.SPECIAL_DATA_SCRIPT_TYPE = "2";
     // The following make up a bitmask
     ResourceTimingCompression.SPECIAL_DATA_SCRIPT_ASYNC_ATTR = 0x1;
@@ -120,7 +120,7 @@
     // 0 => HEAD, 1 => BODY
     ResourceTimingCompression.SPECIAL_DATA_SCRIPT_LOCAT_ATTR = 0x4;
 
-    // Dimension data special type
+    // ServerTiming data: .serverTiming field
     ResourceTimingCompression.SPECIAL_DATA_SERVERTIMING_TYPE = "3";
 
     // Link attributes
@@ -129,11 +129,23 @@
     // Namespaced data
     ResourceTimingCompression.SPECIAL_DATA_NAMESPACED_TYPE = "5";
 
-    // Service worker type
+    // Service worker type: .workerStart field
     ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE = "6";
 
-    // Next Hop Protocol
+    // Next Hop Protocol: .nextHopProtocol field
     ResourceTimingCompression.SPECIAL_DATA_PROTOCOL = "7";
+
+    // Content-Type .contentType field
+    ResourceTimingCompression.SPECIAL_DATA_CONTENT_TYPE = "8";
+
+    // Delivery Type: .deliveryType field
+    ResourceTimingCompression.SPECIAL_DATA_DELIVERY_TYPE = "9";
+
+    // Render Blocking Status: .renderBlockingStatus field
+    ResourceTimingCompression.SPECIAL_DATA_RENDER_BLOCKING_STATUS = "a";
+
+    // Response Status: .responseStatus field
+    ResourceTimingCompression.SPECIAL_DATA_RESPONSE_STATUS = "b";
 
     /**
      * These are the only `rel` types that might be reference-able from
@@ -162,6 +174,76 @@
      * Words to break to avoid XSS filters
      */
     ResourceTimingCompression.xssBreakWords = ResourceTimingCompression.DEFAULT_XSS_BREAK_WORDS;
+
+    //
+    // Value maps
+    //
+    /**
+     * Map of .contentType strings to values
+     */
+    ResourceTimingCompression.contentTypeMap = {
+        // next value to assign
+        next: 15,
+        // pre-set value count
+        pre: 15,
+        // pre-fill with some common ones
+        vals: {
+            "application/json": 0,
+            "application/xml": 1,
+            "font/woff": 2,
+            "font/woff2": 3,
+            "image/avif": 4,
+            "image/gif": 5,
+            "image/jpeg": 6,
+            "image/png": 7,
+            "image/svg+xml": 8,
+            "image/webp": 9,
+            "image/x-icon": 10,
+            "text/css": 11,
+            "text/html": 12,
+            "text/javascript": 13,
+            "text/plain": 14,
+            // TODO?
+        }
+    };
+
+    /**
+     * Map of .deliveryType strings to values
+     */
+    ResourceTimingCompression.deliveryTypeMap = {
+        // next value to assign
+        next: 2,
+        // pre-set value count
+        pre: 2,
+        // pre-fill with some common ones
+        // https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType
+        vals: {
+            "cache": 0,
+            "navigational-prefetch": 1
+        }
+    };
+
+    /**
+     * Map of .nextHopProtocol strings to values.
+     *
+     * NOTE: Incoming data has 'http/' changed to just 'h' to normalize
+     */
+    ResourceTimingCompression.nextHopProtocolMap = {
+        // next value to assign
+        next: 6,
+        // pre-set value count
+        pre: 6,
+        // pre-fill with some common ones
+        // https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/nextHopProtocol
+        vals: {
+            "h2": 0,
+            "h0.9": 1,
+            "h1.0": 2,
+            "h1.1": 3,
+            "h2c": 4,
+            "h3": 5
+        }
+    };
 
     //
     // Functions
@@ -223,7 +305,7 @@
                 // ensure this sequence doesn't get combined.
                 urlFixed = urlFixed.replace(
                     this.xssBreakWords[i],
-                    "$1" + ResourceTimingCompression.XSS_BREAK_DELIM + "$2");
+                    "$1" + this.XSS_BREAK_DELIM + "$2");
             }
 
             value = entries[url];
@@ -283,7 +365,7 @@
                     // swap the current leaf with compressed one
                     delete cur[node];
 
-                    if (node === ResourceTimingCompression.XSS_BREAK_DELIM) {
+                    if (node === this.XSS_BREAK_DELIM) {
                         // If this node is a newline, which can't be in a regular URL,
                         // it's due to the XSS patch.  Remove the placeholder character,
                         // and make sure this node isn't compressed by incrementing
@@ -414,8 +496,8 @@
             a = frame.document.createElement("a");
 
             // get all scripts as an object keyed on script.src
-            collectResources(a, scripts, "script");
-            collectResources(a, links, "link");
+            this.collectResources(a, scripts, "script");
+            this.collectResources(a, links, "link");
 
             // get sub-frames' entries first
             if (frame.frames) {
@@ -572,8 +654,8 @@
             var s = scripts[entry.name];
 
             // Add async & defer based on attribute values
-            rtEntry.scriptAttrs = (s.async ? ResourceTimingCompression.SPECIAL_DATA_SCRIPT_ASYNC_ATTR : 0) |
-                (s.defer ? ResourceTimingCompression.SPECIAL_DATA_SCRIPT_DEFER_ATTR : 0);
+            rtEntry.scriptAttrs = (s.async ? this.SPECIAL_DATA_SCRIPT_ASYNC_ATTR : 0) |
+                (s.defer ? this.SPECIAL_DATA_SCRIPT_DEFER_ATTR : 0);
 
             while (s.nodeType === 1 && s.nodeName !== "BODY") {
                 s = s.parentNode;
@@ -581,7 +663,7 @@
 
             // Add location by traversing up the tree until we either hit BODY or document
             rtEntry.scriptAttrs |= (s.nodeName === "BODY" ?
-                ResourceTimingCompression.SPECIAL_DATA_SCRIPT_LOCAT_ATTR : 0);
+                this.SPECIAL_DATA_SCRIPT_LOCAT_ATTR : 0);
         }
     };
 
@@ -640,7 +722,7 @@
      * @param {Object} obj object of resources where the key is the url
      * @param {string} tagName tag name to collect
      */
-    function collectResources(a, obj, tagName) {
+    ResourceTimingCompression.collectResources = function(a, obj, tagName) {
         Array.prototype
             .forEach
             .call(a.ownerDocument.getElementsByTagName(tagName), function(r) {
@@ -652,7 +734,7 @@
                     obj[a.href] = r;
                 }
             });
-    }
+    };
 
     /**
      * Finds all remote resources in the selected window that are visible, and returns an object
@@ -829,16 +911,16 @@
                 }
             }
 
-            ResourceTimingCompression.accumulateServerTimingEntries(countCollector, e.serverTiming);
+            this.accumulateServerTimingEntries(countCollector, e.serverTiming);
             filteredEntries.push(e);
         }
 
-        var lookup = ResourceTimingCompression.compressServerTiming(countCollector);
+        var lookup = this.compressServerTiming(countCollector);
         return {
             entries: filteredEntries,
             serverTiming: {
                 lookup: lookup,
-                indexed: ResourceTimingCompression.indexServerTiming(lookup)
+                indexed: this.indexServerTiming(lookup)
             }
         };
     };
@@ -957,7 +1039,7 @@
         }
 
         // apply limits
-        return this.cleanupURL(url, ResourceTimingCompression.DEFAULT_URL_LIMIT);
+        return this.cleanupURL(url, this.DEFAULT_URL_LIMIT);
     };
 
     /**
@@ -974,14 +1056,14 @@
             win = window;
         }
 
-        var ret = ResourceTimingCompression.getFilteredResourceTiming(win, from, to);
+        var ret = this.getFilteredResourceTiming(win, from, to);
         var entries = ret.entries, serverTiming = ret.serverTiming;
 
         if (!entries || !entries.length) {
             return {};
         }
 
-        return ResourceTimingCompression.compressResourceTiming(win, entries, serverTiming, skipDimensions);
+        return this.compressResourceTiming(win, entries, serverTiming, skipDimensions);
     };
 
     /**
@@ -1012,6 +1094,51 @@
 
         // fall back guessing based on duration (non-RT2 or cross-origin)
         return entry.duration < 30;
+    };
+
+    /**
+     * Gets a string value mapped to a number/character.  Builds a map
+     * of seen values to numbers/characters over time.
+     *
+     * @param {object} map Values map
+     * @param {string} value Value to check
+     *
+     * @returns {string} Mapped value character
+     */
+    ResourceTimingCompression.getValueMapFor = function(map, value) {
+        if (typeof map.vals[value] === "undefined") {
+            map.vals[value] = map.next;
+
+            return (map.next++).toString(36);
+        }
+
+        return map.vals[value] === 0 ? "" : map.vals[value].toString(36);
+    };
+
+    /**
+     * Gets a values map suitable for a beacon.
+     *
+     * All values are converted to a string array.
+     *
+     * @param {object} map Values map
+     *
+     * @returns {string[]} String array
+     */
+    ResourceTimingCompression.getValuesMapForBeacon = function(map) {
+        var ary = [];
+
+        var skip = map.pre;
+
+        for (var value in map.vals) {
+            // skip any well-known
+            if (skip-- > 0) {
+                continue;
+            }
+
+            ary.push(value);
+        }
+
+        return ary;
     };
 
     /**
@@ -1069,33 +1196,33 @@
             // add content and transfer size info
             var compSize = this.compressSize(e);
             if (compSize !== "") {
-                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
-                    ResourceTimingCompression.SPECIAL_DATA_SIZE_TYPE +
+                data += this.SPECIAL_DATA_PREFIX +
+                    this.SPECIAL_DATA_SIZE_TYPE +
                     compSize;
             }
 
             if (Object.prototype.hasOwnProperty.call(e, "scriptAttrs")) {
-                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
-                    ResourceTimingCompression.SPECIAL_DATA_SCRIPT_TYPE +
+                data += this.SPECIAL_DATA_PREFIX +
+                    this.SPECIAL_DATA_SCRIPT_TYPE +
                     e.scriptAttrs;
             }
 
             if (Object.prototype.hasOwnProperty.call(e, "linkAttrs")) {
-                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
-                    ResourceTimingCompression.SPECIAL_DATA_LINK_ATTR_TYPE +
+                data += this.SPECIAL_DATA_PREFIX +
+                    this.SPECIAL_DATA_LINK_ATTR_TYPE +
                     e.linkAttrs;
             }
 
             if (e.serverTiming && e.serverTiming.length) {
-                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX +
-                    ResourceTimingCompression.SPECIAL_DATA_SERVERTIMING_TYPE +
+                data += this.SPECIAL_DATA_PREFIX +
+                    this.SPECIAL_DATA_SERVERTIMING_TYPE +
                     e.serverTiming.reduce(function(stData, entry, entryIndex) { /* eslint no-loop-func:0 */
                         var duration = String(entry.duration);
                         if (duration.substring(0, 2) === "0.") {
                             // lop off the leading 0
                             duration = duration.substring(1);
                         }
-                        var lookupKey = ResourceTimingCompression.identifyServerTimingEntry(
+                        var lookupKey = this.identifyServerTimingEntry(
                             serverTiming.indexed[entry.name].index,
                             serverTiming.indexed[entry.name].descriptions[entry.description]);
                         stData += (entryIndex > 0 ? "," : "") + duration + lookupKey;
@@ -1115,13 +1242,13 @@
                 // We feel marking such cases as 0ms, after rounding down, for workerStart would present
                 // more incorrect indication to the user. Hence the decision to round up.
                 var workerStartOffset = this.trimTiming(
-                    ResourceTimingCompression.roundUpTiming(e.workerStart), e.startTime);
+                    this.roundUpTiming(e.workerStart), e.startTime);
 
                 var fetchStartOffset = this.trimTiming(
-                    ResourceTimingCompression.roundUpTiming(e.fetchStart), e.startTime);
+                    this.roundUpTiming(e.fetchStart), e.startTime);
 
-                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX
-                    + ResourceTimingCompression.SPECIAL_DATA_SERVICE_WORKER_TYPE
+                data += this.SPECIAL_DATA_PREFIX
+                    + this.SPECIAL_DATA_SERVICE_WORKER_TYPE
                     + this.toBase36(workerStartOffset)
                     + ((fetchStartOffset !== workerStartOffset) ?
                         ("," + this.toBase36(fetchStartOffset)).replace(/,+$/, "") : "");
@@ -1129,18 +1256,47 @@
             }
 
             finalUrl = url = this.trimUrl(e.name, this.trimUrls);
-            if (ResourceTimingCompression.HOSTNAMES_REVERSED) {
+            if (this.HOSTNAMES_REVERSED) {
                 finalUrl = this.reverseHostname(url);
             }
 
             // nextHopProtocol handling
             if (Object.prototype.hasOwnProperty.call(e, "nextHopProtocol") &&
                 e.nextHopProtocol !== "" &&
-                !ResourceTimingCompression.isCacheHit(e)) {
+                !this.isCacheHit(e)) {
                 // change http/1.1 to h1.1 to be consistent with h2 & h3.
-                data += ResourceTimingCompression.SPECIAL_DATA_PREFIX
-                    + ResourceTimingCompression.SPECIAL_DATA_PROTOCOL
-                    + e.nextHopProtocol.replace("http/", "h");
+                data += this.SPECIAL_DATA_PREFIX
+                    + this.SPECIAL_DATA_PROTOCOL
+                    + this.getValueMapFor(this.nextHopProtocolMap, e.nextHopProtocol.replace("http/", "h"));
+            }
+
+            if (Object.prototype.hasOwnProperty.call(e, "contentType")) {
+                data += this.SPECIAL_DATA_PREFIX
+                    + this.SPECIAL_DATA_CONTENT_TYPE
+                    + this.getValueMapFor(this.contentTypeMap, e.contentType);
+            }
+
+            if (Object.prototype.hasOwnProperty.call(e, "deliveryType")) {
+                data += this.SPECIAL_DATA_PREFIX
+                    + this.SPECIAL_DATA_DELIVERY_TYPE
+                    + this.getValueMapFor(this.deliveryTypeMap, e.deliveryType);
+            }
+
+            if (Object.prototype.hasOwnProperty.call(e, "renderBlockingStatus")) {
+                // only add if blocking
+                if (e.renderBlockingStatus === "blocking") {
+                    data += this.SPECIAL_DATA_PREFIX +
+                    this.SPECIAL_DATA_RENDER_BLOCKING_STATUS;
+                }
+            }
+
+            if (e.hasOwnProperty("responseStatus")) {
+                // don't add for 200
+                if (e.responseStatus !== 200) {
+                    data += this.SPECIAL_DATA_PREFIX +
+                    this.SPECIAL_DATA_RESPONSE_STATUS +
+                    this.toBase36(e.responseStatus);
+                }
             }
 
             if (!Object.prototype.hasOwnProperty.call(e, "_data")) {
@@ -1154,8 +1310,8 @@
                     // *!-.()~_ but - and . are special to number representation so we don't use them
                     // After the *, the type of special data (ResourceTiming = 0) is added
                     results[finalUrl] =
-                        ResourceTimingCompression.SPECIAL_DATA_PREFIX +
-                        ResourceTimingCompression.SPECIAL_DATA_DIMENSION_TYPE +
+                        this.SPECIAL_DATA_PREFIX +
+                        this.SPECIAL_DATA_DIMENSION_TYPE +
                         visibleEntries[url].map(this.toBase36).join(",").replace(/,+$/, "")
                         + "|"
                         + data;
@@ -1166,8 +1322,8 @@
                 var namespacedData = "";
                 for (var key in e._data) {
                     if (Object.prototype.hasOwnProperty.call(e._data, key)) {
-                        namespacedData += ResourceTimingCompression.SPECIAL_DATA_PREFIX
-                            + ResourceTimingCompression.SPECIAL_DATA_NAMESPACED_TYPE
+                        namespacedData += this.SPECIAL_DATA_PREFIX
+                            + this.SPECIAL_DATA_NAMESPACED_TYPE
                             + key
                             + ":"
                             + e._data[key];
@@ -1198,7 +1354,7 @@
      * @returns {string} the input URL with the hostname portion reversed, if it can be found
      */
     ResourceTimingCompression.reverseHostname = function(url) {
-        return url.replace(ResourceTimingCompression.HOSTNAME_REGEX, function(m, p1, p2, p3) {
+        return url.replace(this.HOSTNAME_REGEX, function(m, p1, p2, p3) {
             // p2 is everything after the first `://` and before the next `/`
             // which includes `<username>:<password>@` and `:<port-number>`, if present
             return p1 + ResourceTimingCompression.reverseString(p2) + p3;

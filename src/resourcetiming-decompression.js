@@ -119,6 +119,59 @@
     };
 
     /**
+     * Known Content-Types.
+     *
+     * May be appended if the page encounters new ones.
+     *
+     * @enum {number}
+     */
+    ResourceTimingDecompression.CONTENT_TYPES = {
+        "application/json": 0,
+        "application/xml": 1,
+        "font/woff": 2,
+        "font/woff2": 3,
+        "image/avif": 4,
+        "image/gif": 5,
+        "image/jpeg": 6,
+        "image/png": 7,
+        "image/svg+xml": 8,
+        "image/webp": 9,
+        "image/x-icon": 10,
+        "text/css": 11,
+        "text/html": 12,
+        "text/javascript": 13,
+        "text/plain": 14,
+    };
+
+    /**
+     * Known Next Hop Protocols.
+     *
+     * May be appended if the page encounters new ones.
+     *
+     * @enum {number}
+     */
+    ResourceTimingDecompression.NEXT_HOP_PROTOCOLS = {
+        "h2": 0,
+        "h0.9": 1,
+        "h1.0": 2,
+        "h1.1": 3,
+        "h2c": 4,
+        "h3": 5
+    };
+
+    /**
+     * Known Delivery Types.
+     *
+     * May be appended if the page encounters new ones.
+     *
+     * @enum {number}
+     */
+    ResourceTimingDecompression.DELIVERY_TYPES = {
+        "cache": 0,
+        "navigational-prefetch": 1
+    };
+
+    /**
      * Returns a map with key/value pairs reversed.
      *
      * @param {object} origMap Map we want to reverse.
@@ -159,22 +212,44 @@
     ResourceTimingDecompression.REV_REL_TYPES = ResourceTimingDecompression.
         getRevMap(ResourceTimingDecompression.REL_TYPES);
 
+    /**
+     * Reverse Next Hop Protocol Map
+     */
+    ResourceTimingDecompression.REV_NEXT_HOP_PROTOCOLS = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.NEXT_HOP_PROTOCOLS);
+
+    /**
+     * Reverse Content-Type map
+     */
+    ResourceTimingDecompression.REV_CONTENT_TYPES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.CONTENT_TYPES);
+
+    /**
+     * Reverse Next Hop Protocol Map
+     */
+    ResourceTimingDecompression.REV_DELIVERY_TYPES = ResourceTimingDecompression.
+        getRevMap(ResourceTimingDecompression.DELIVERY_TYPES);
+
+    //
+    // Special Datas
+    //
+
     // Any ResourceTiming data time that starts with this character is not a time,
     // but something else (like dimension data)
     ResourceTimingDecompression.SPECIAL_DATA_PREFIX = "*";
 
-    // Dimension data special type
+    // Dimension data
     ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_TYPE = "0";
     ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_PREFIX = ResourceTimingDecompression.SPECIAL_DATA_PREFIX +
         ResourceTimingDecompression.SPECIAL_DATA_DIMENSION_TYPE;
 
-    // Dimension data special type
+    // Size data
     ResourceTimingDecompression.SPECIAL_DATA_SIZE_TYPE = "1";
 
-    // Dimension data special type
+    // Script attributes
     ResourceTimingDecompression.SPECIAL_DATA_SCRIPT_TYPE = "2";
 
-    // Dimension data special type
+    // ServerTiming data: .serverTiming field
     ResourceTimingDecompression.SPECIAL_DATA_SERVERTIMING_TYPE = "3";
 
     // Link attributes
@@ -183,14 +258,26 @@
     // Namespaced data
     ResourceTimingDecompression.SPECIAL_DATA_NAMESPACED_TYPE = "5";
 
-    // Service worker type
+    // Service worker type: .workerStart field
     ResourceTimingDecompression.SPECIAL_DATA_SERVICE_WORKER_TYPE = "6";
+
+    // Next Hop Protocol: .nextHopProtocol field
+    ResourceTimingDecompression.SPECIAL_DATA_PROTOCOL = "7";
+
+    // Content-Type .contentType field
+    ResourceTimingDecompression.SPECIAL_DATA_CONTENT_TYPE = "8";
+
+    // Delivery Type: .deliveryType field
+    ResourceTimingDecompression.SPECIAL_DATA_DELIVERY_TYPE = "9";
+
+    // Render Blocking Status: .renderBlockingStatus field
+    ResourceTimingDecompression.SPECIAL_DATA_RENDER_BLOCKING_STATUS = "a";
+
+    // Response Status: .responseStatus field
+    ResourceTimingDecompression.SPECIAL_DATA_RESPONSE_STATUS = "b";
 
     // Regular Expression to parse a URL
     ResourceTimingDecompression.HOSTNAME_REGEX = /^(https?:\/\/)([^/]+)(.*)/;
-
-    // Next Hop Protocol
-    ResourceTimingDecompression.SPECIAL_DATA_PROTOCOL = "7";
 
     //
     // Functions
@@ -908,6 +995,14 @@
             resource = this.decompressServiceWorkerData(compressed, resource);
         } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_PROTOCOL) {
             resource = this.decompressNextHopProtocol(compressed, resource);
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_CONTENT_TYPE) {
+            resource = this.decompressContentType(compressed, resource);
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_DELIVERY_TYPE) {
+            resource = this.decompressDeliveryType(compressed, resource);
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_RENDER_BLOCKING_STATUS) {
+            resource = this.decompressRenderBlockingStatus(compressed, resource);
+        } else if (dataType === ResourceTimingDecompression.SPECIAL_DATA_RESPONSE_STATUS) {
+            resource = this.decompressResponseStatus(compressed, resource);
         }
 
         return resource;
@@ -1009,17 +1104,79 @@
     ResourceTimingDecompression.decompressNextHopProtocol = function(compressed, resource) {
         resource = resource || {};
 
-        if (!compressed) {
-            resource.nextHopProtocol = "";
-            return resource;
-        }
-
-        if (compressed.substr(0, 2) === "h1") {
-            resource.nextHopProtocol = compressed.replace(/^h1/, "http/1");
+        if (compressed && compressed.length >= 2) {
+            // initial version, where the full protocol was sent
+            if (compressed.substr(0, 2) === "h0") {
+                resource.nextHopProtocol = compressed.replace(/^h0/, "http/0");
+            } else if (compressed.substr(0, 2) === "h1") {
+                resource.nextHopProtocol = compressed.replace(/^h1/, "http/1");
+            } else {
+                resource.nextHopProtocol = compressed;
+            }
         } else {
-            resource.nextHopProtocol = compressed;
+            var compressedVal = parseInt(compressed || 0, 36);
+            resource.nextHopProtocol = this.REV_NEXT_HOP_PROTOCOLS[compressedVal];
         }
 
+        return resource;
+    };
+
+    /**
+     * Decompress a contentType value
+     *
+     * @param {string} compressed Compressed contentType key
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with contentType set
+     */
+    ResourceTimingDecompression.decompressContentType = function(compressed, resource) {
+        resource = resource || {};
+
+        var compressedVal = parseInt(compressed || 0, 36);
+        resource.contentType = this.REV_CONTENT_TYPES[compressedVal];
+        return resource;
+    };
+
+    /**
+     * Decompress a deliveryType value
+     *
+     * @param {string} compressed Compressed deliveryType key
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with deliveryType set
+     */
+    ResourceTimingDecompression.decompressDeliveryType = function(compressed, resource) {
+        resource = resource || {};
+
+        var compressedVal = parseInt(compressed || 0, 36);
+        resource.deliveryType = this.REV_DELIVERY_TYPES[compressedVal];
+        return resource;
+    };
+
+    /**
+     * Decompress a renderBlockingStatus value
+     *
+     * @param {string} compressed Compressed renderBlockingStatus key
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with renderBlockingStatus set
+     */
+    ResourceTimingDecompression.decompressRenderBlockingStatus = function(compressed, resource) {
+        resource = resource || {};
+
+        // existence means blocking
+        resource.renderBlockingStatus = "blocking";
+        return resource;
+    };
+
+    /**
+     * Decompress a responseStatus value
+     *
+     * @param {string} compressed Compressed responseStatus key
+     * @param {ResourceTiming} resource ResourceTiming object
+     * @returns {ResourceTiming} ResourceTiming object with responseStatus set
+     */
+    ResourceTimingDecompression.decompressResponseStatus = function(compressed, resource) {
+        resource = resource || {};
+
+        resource.responseStatus = compressed ? parseInt(compressed, 36) : 200;
         return resource;
     };
 

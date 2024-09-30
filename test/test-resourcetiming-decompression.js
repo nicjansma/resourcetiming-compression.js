@@ -24,7 +24,7 @@
         // .decodeCompressedResource()
         //
         describe(".decodeCompressedResource()", function() {
-            it("should process more than one special datas", function() {
+            it("Should process more than one special datas", function() {
                 var entry = ResourceTimingDecompression.decodeCompressedResource(
                     "68y,95,7x,5s,5r,,3y,3y,1*1a,a,b*27*3100,:1*41*6a*7h1.1",
                     "http://moc.oof",
@@ -59,23 +59,23 @@
         // .decodeCompressedResourceTimeStamp
         //
         describe(".decodeCompressedResourceTimeStamp()", function() {
-            it("should return 0 if the array is empty", function() {
+            it("Should return 0 if the array is empty", function() {
                 expect(ResourceTimingDecompression.decodeCompressedResourceTimeStamp([], 0, 100)).to.be(0);
             });
 
-            it("should return 0 if the timestamp is 0", function() {
+            it("Should return 0 if the timestamp is 0", function() {
                 expect(ResourceTimingDecompression.decodeCompressedResourceTimeStamp([0], 0, 100)).to.be(0);
             });
 
-            it("should return 0 if the timestamp is beyond the array length", function() {
+            it("Should return 0 if the timestamp is beyond the array length", function() {
                 expect(ResourceTimingDecompression.decodeCompressedResourceTimeStamp([100], 1, 100)).to.be(0);
             });
 
-            it("should give the timestamp with a single entry", function() {
+            it("Should give the timestamp with a single entry", function() {
                 expect(ResourceTimingDecompression.decodeCompressedResourceTimeStamp([100], 0, 100)).to.be(200);
             });
 
-            it("should give the timestamp with multiple entries", function() {
+            it("Should give the timestamp with multiple entries", function() {
                 expect(ResourceTimingDecompression.decodeCompressedResourceTimeStamp([100, 200, 300], 2, 100))
                     .to.be(400);
             });
@@ -85,11 +85,11 @@
         // .getInitiatorTypeFromIndex
         //
         describe(".getInitiatorTypeFromIndex()", function() {
-            it("should return other on a bad type", function() {
+            it("Should return other on a bad type", function() {
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(-1)).to.be("other");
             });
 
-            it("should return properly for all of the known types", function() {
+            it("Should return properly for all of the known types", function() {
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(0)).to.be("other");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(1)).to.be("img");
                 expect(ResourceTimingDecompression.getInitiatorTypeFromIndex(2)).to.be("link");
@@ -142,11 +142,11 @@
                 };
             }
 
-            it("should return an empty array if given an empty trie", function() {
+            it("Should return an empty array if given an empty trie", function() {
                 expect(ResourceTimingDecompression.decompressResources({})).to.eql([]);
             });
 
-            it("should process a single-node trie", function() {
+            it("Should process a single-node trie", function() {
                 var data = {
                     "abc": compressedTimestamps
                 };
@@ -155,7 +155,7 @@
                 expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
             });
 
-            it("should process a complex trie", function() {
+            it("Should process a complex trie", function() {
                 var data = {
                     "abc": compressedTimestamps,
                     "xyz": compressedTimestamps
@@ -165,7 +165,7 @@
                 expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
             });
 
-            it("should process a complex trie", function() {
+            it("Should process a complex trie", function() {
                 var data = {
                     "ab":
                     {
@@ -181,7 +181,7 @@
                 expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
             });
 
-            it("should decompress the initiatorType for indexes over 9", function() {
+            it("Should decompress the initiatorType for indexes over 9", function() {
                 var data = {
                     "abc": "j1,7,6,5,5,4,3,3,2,1,0"
                 };
@@ -194,7 +194,7 @@
                 expect(ResourceTimingDecompression.decompressResources(data)).to.eql(expected);
             });
 
-            it("should work with workerStart times", function() {
+            it("Should work with workerStart times", function() {
                 var data = {
                     "abc": "31,b,a,9,8,7,6,5,4,1*62,3"
                 };
@@ -869,7 +869,7 @@
         // .decompressScriptType
         //
         describe(".decompressScriptType()", function() {
-            it("should set scriptAsync attribute", function() {
+            it("Should set scriptAsync attribute", function() {
                 expect(ResourceTimingDecompression.decompressScriptType("1")).to.eql({
                     scriptAsync: true,
                     scriptBody: false,
@@ -877,7 +877,7 @@
                 });
             });
 
-            it("should set scriptDefer attribute", function() {
+            it("Should set scriptDefer attribute", function() {
                 expect(ResourceTimingDecompression.decompressScriptType("2")).to.eql({
                     scriptAsync: false,
                     scriptBody: false,
@@ -885,7 +885,7 @@
                 });
             });
 
-            it("should set scriptBody attribute", function() {
+            it("Should set scriptBody attribute", function() {
                 expect(ResourceTimingDecompression.decompressScriptType("4")).to.eql({
                     scriptAsync: false,
                     scriptBody: true,
@@ -893,7 +893,7 @@
                 });
             });
 
-            it("should set all script* attributes", function() {
+            it("Should set all script* attributes", function() {
                 expect(ResourceTimingDecompression.decompressScriptType("7")).to.eql({
                     scriptAsync: true,
                     scriptBody: true,
@@ -906,25 +906,25 @@
         // .decompressLinkAttrType
         //
         describe(".decompressLinkAttrType()", function() {
-            it("should set rel='prefetch' attribute", function() {
+            it("Should set rel='prefetch' attribute", function() {
                 expect(ResourceTimingDecompression.decompressLinkAttrType("1")).to.eql({
                     rel: "prefetch"
                 });
             });
 
-            it("should set rel='preload' attribute", function() {
+            it("Should set rel='preload' attribute", function() {
                 expect(ResourceTimingDecompression.decompressLinkAttrType("2")).to.eql({
                     rel: "preload"
                 });
             });
 
-            it("should set rel='prerender' attribute", function() {
+            it("Should set rel='prerender' attribute", function() {
                 expect(ResourceTimingDecompression.decompressLinkAttrType("3")).to.eql({
                     rel: "prerender"
                 });
             });
 
-            it("should set rel='stylesheet' attributes", function() {
+            it("Should set rel='stylesheet' attributes", function() {
                 expect(ResourceTimingDecompression.decompressLinkAttrType("4")).to.eql({
                     rel: "stylesheet"
                 });
@@ -935,27 +935,107 @@
         // .decompressNextHopProtocol
         //
         describe(".decompressNextHopProtocol()", function() {
-            it("should set nextHopProtocol='' when missing", function() {
+            it("Should set nextHopProtocol='h2' when the special data exists but no index set", function() {
                 expect(ResourceTimingDecompression.decompressNextHopProtocol()).to.eql({
-                    nextHopProtocol: ""
+                    nextHopProtocol: "h2"
                 });
             });
 
-            it("should set nextHopProtocol='http/1.1' for 'h1.1'", function() {
+            it("Should set nextHopProtocol='http/1.1' for 'h1.1'", function() {
                 expect(ResourceTimingDecompression.decompressNextHopProtocol("h1.1")).to.eql({
                     nextHopProtocol: "http/1.1"
                 });
             });
 
-            it("should set nextHopProtocol='h2' for 'h2'", function() {
+            it("Should set nextHopProtocol='h2' for 'h2'", function() {
                 expect(ResourceTimingDecompression.decompressNextHopProtocol("h2")).to.eql({
                     nextHopProtocol: "h2"
                 });
             });
 
-            it("should set nextHopProtocol='h3' for 'h3'", function() {
+            it("Should set nextHopProtocol='h3' for 'h3'", function() {
                 expect(ResourceTimingDecompression.decompressNextHopProtocol("h3")).to.eql({
                     nextHopProtocol: "h3"
+                });
+            });
+
+            it("Should set nextHopProtocol='h2' for 0", function() {
+                expect(ResourceTimingDecompression.decompressNextHopProtocol("0")).to.eql({
+                    nextHopProtocol: "h2"
+                });
+            });
+
+            it("Should set nextHopProtocol='h2' for 0", function() {
+                expect(ResourceTimingDecompression.decompressNextHopProtocol("0")).to.eql({
+                    nextHopProtocol: "h2"
+                });
+            });
+        });
+
+        //
+        // .decompressContentType
+        //
+        describe(".decompressContentType()", function() {
+            it("Should set contentType='application/json' when the special data exists but no index set", function() {
+                expect(ResourceTimingDecompression.decompressContentType()).to.eql({
+                    contentType: "application/json"
+                });
+            });
+
+            it("Should set contentType='application/xml' when index = 1", function() {
+                expect(ResourceTimingDecompression.decompressContentType("1")).to.eql({
+                    contentType: "application/xml"
+                });
+            });
+
+            it("Should set contentType='text/plain' when index = 'e'", function() {
+                expect(ResourceTimingDecompression.decompressContentType("e")).to.eql({
+                    contentType: "text/plain"
+                });
+            });
+        });
+
+        //
+        // .deliveryType
+        //
+        describe(".decompressDeliveryType()", function() {
+            it("Should set deliveryType='cache' when the special data exists but no index set", function() {
+                expect(ResourceTimingDecompression.decompressDeliveryType()).to.eql({
+                    deliveryType: "cache"
+                });
+            });
+
+            it("Should set deliveryType='navigational-prefetch' when index = 1", function() {
+                expect(ResourceTimingDecompression.decompressDeliveryType("1")).to.eql({
+                    deliveryType: "navigational-prefetch"
+                });
+            });
+        });
+
+        //
+        // .decompressRenderBlockingStatus
+        //
+        describe(".decompressRenderBlockingStatus()", function() {
+            it("Should set renderBlockingStatus='blocking' when the special data exists but no index set", function() {
+                expect(ResourceTimingDecompression.decompressRenderBlockingStatus()).to.eql({
+                    renderBlockingStatus: "blocking"
+                });
+            });
+        });
+
+        //
+        // .decompressResponseStatus
+        //
+        describe(".decompressResponseStatus()", function() {
+            it("Should set responseStatus=200 when the special data exists but no index set", function() {
+                expect(ResourceTimingDecompression.decompressResponseStatus()).to.eql({
+                    responseStatus: 200
+                });
+            });
+
+            it("Should set responseStatus=404 when set to 'b8'", function() {
+                expect(ResourceTimingDecompression.decompressResponseStatus("b8")).to.eql({
+                    responseStatus: 404
                 });
             });
         });
