@@ -1,6 +1,6 @@
 # resourcetiming-compression.js
 
-v1.3.3
+v1.4.0
 
 [http://nicj.net](http://nicj.net)
 
@@ -11,19 +11,17 @@ Licensed under the MIT license
 `resourcetiming-compression.js` compresses data from [ResourceTiming](http://www.w3.org/TR/resource-timing/).  A
 companion script, `resourcetiming-decompression.js`, converts the compressed data back to the original form.
 
-[ResourceTiming](http://www.w3.org/TR/resource-timing/) is a W3C web-perf API that exposes all of the page's resources' network timing information to the
-developer and is available in most [modern browsers](http://caniuse.com/#feat=resource-timing).  The interface
-`performance.getEntriesByType('resource')` returns a list of resources with information about each resource's URL, why it was downloaded, and
-a dozen timestamps.  Collecting this information is easy, but beaconing all of this data back to a data warehouse can
-be a challenge because of the amount of data available for each resource.  On a typical page, which might have over
-100 resources, you could easily see 50 KB of ResourceTiming data per page-load.
+[ResourceTiming](http://www.w3.org/TR/resource-timing/) is a W3C WebPerf API that exposes all of the page's resources' network timing information (and additional details) to JavaScript, and is available in most [modern browsers](http://caniuse.com/#feat=resource-timing).
+The interface `performance.getEntriesByType('resource')` returns a list of resources with information about each resource's URL, inititor, timestamps, size information and more.
+Collecting this information is easy, but beaconing all of the data back to a data warehouse can be a challenge because of the amount of data available for each resource.
+On a typical page, which might have over 100 resources, the browser could easily generate 50 KB+ of ResourceTiming data per page-load.
 
 `resourcetiming-compression.js` applies several data-compression techniques to reduce the size of your serialized
 ResourceTiming data to about 15% of it's original size in many cases.  See
 [this nicj.net blog post](http://nicj.net/compressing-resourcetiming/) for a description of these techniques.
 
 `resourcetiming-decompression.js` is a companion script that will take the compressed ResourceTiming data and
-builds it back to its original ResourceTiming form (eg. `performance.getEntriesByType('resource')`) for analysis.
+rebuilds the ResourceTiming structures (eg. `performance.getEntriesByType('resource')`) for analysis.
 
 NOTE: `resourcetiming-compression.js` is the same code that drives the `restiming.js` plugin for
 [Boomerang](https://github.com/lognormal/boomerang/), but also includes the `resourcetiming-decompression.js` component.
@@ -32,15 +30,15 @@ NOTE: `resourcetiming-compression.js` is the same code that drives the `restimin
 
 Releases are available for download from [GitHub](https://github.com/nicjansma/resourcetiming-compression.js).
 
-**Development:** [resourcetiming-compression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-compression.js) - 30kb
+**Development:** [resourcetiming-compression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-compression.js) - 57kb
 
 **Production:** [resourcetiming-compression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-compression.min.js)
-    - 2.4kb (minified / gzipped)
+    - 4.7kb (minified / gzipped)
 
-**Development:** [resourcetiming-decompression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-decompression.js) - 8.8kb
+**Development:** [resourcetiming-decompression.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/src/resourcetiming-decompression.js) - 40kb
 
 **Production:** [resourcetiming-decompression.min.js](https://github.com/nicjansma/resourcetiming-compression.js/raw/master/dist/resourcetiming-decompression.min.js)
-    - 1kb (minified / gzipped)
+    - 3.3kb (minified / gzipped)
 
 resourcetiming-compression.js is also available as the [npm resourcetiming-compression module](https://npmjs.org/package/resourcetiming-compression). You can install
 using  Node Package Manager (npm):
@@ -239,6 +237,10 @@ The special data types are:
 * `5`: Namespaced data
 * `6`: Service Worker Start time
 * `7`: `nextHopProtocol` data
+* `8`: `contentType` data
+* `9`: `deliveryType` data
+* `a`: `renderBlockingStatus` data
+* `b`: `responseStatus` data
 
 Details about each special data follows.
 
@@ -534,6 +536,137 @@ a special prefix of `*7`:
 *7[h1|h1.1|h2|h3|...]
 ```
 
+Initial versions of `nexHopProtocol` data were encoded inline as the string (per above).  If the value is 2+ characters, it can be assumed the data is the `nextHopProtocol` string itself (possibly with `http/` replaced as just `h`).
+
+Recent versions no longer include the string, and instead use a lookup map to minimize bytes.  If the value is a single character, it maps to one of the values below (or new values, if seen in the wild):
+
+```
+"h2":   0,
+"h0.9": 1,
+"h1.0": 2,
+"h1.1": 3,
+"h2c":  4,
+"h3":   5
+```
+
+```text
+*7[0|1|2...] // possible values
+*7           // h2
+*73          // h3
+*76          // unknown value, value included
+             // in another array on the beacon
+```
+
+Note if no value is provided, it is assumed to be index `0` (`h2`).
+
+`ResourceTimingDecompression` can decode both versions.
+
+### `contentType`
+
+The [HTTP Content-Type](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/contentType) is included for some assets as `.contentType`.
+
+This information is encoded as a "special value" in the resource's timings array.  It will be appended to the
+list of timings with a special prefix of `*8`.
+
+The value is a map to one of the pre-defined `Content-Type`s below.  If the `Content-Type` for a resource doesn't match one of those in the pre-defined list below,
+it will generate a new index (and that list would be included on the beacon for lookup).
+
+The pre-defined `Content-Types` are:
+
+```text
+"application/json": 0,
+"application/xml":  1,
+"font/woff":        2,
+"font/woff2":       3,
+"image/avif":       4,
+"image/gif":        5,
+"image/jpeg":       6,
+"image/png":        7,
+"image/svg+xml":    8,
+"image/webp":       9,
+"image/x-icon":     a,
+"text/css":         b,
+"text/html":        c,
+"text/javascript":  d,
+"text/plain":       e,
+```
+
+Note if no value is provided, it is assumed to be index `0` (`application/json`).
+
+Example:
+
+```text
+*8[0|1|2...e] // possible values
+*8            // application/json
+*8d           // text/javascript
+*8f           // unknown value, value included
+              // in another array on the beacon
+*8g           // second unknown value, etc
+```
+
+### `deliveryType`
+
+The [Delivery Type](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType) is included for some assets as `.deliveryType`.
+
+This information is encoded as a "special value" in the resource's timings array.  It will be appended to the
+list of timings with a special prefix of `*9`.
+
+The value is a map to one of the pre-defined Delivery Types below.  If the Delivery Type for a resource doesn't match one of those in the pre-defined list below,
+it will generate a new index (and that list would be included on the beacon for lookup).
+
+The pre-defined Delivery Types are:
+
+```text
+"cache":                    0,
+"navigational-prefetch":    1
+```
+
+Note if no value is provided, it is assumed to be index `0` (`cache`).
+
+Example:
+
+```text
+*9[0|1...]    // possible values
+*9            // cache
+*91           // navigational-prefetch
+*92           // unknown value, value included
+              // in another array on the beacon
+```
+
+### `renderBlockingStatus`
+
+The [Render Blocking Status](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/renderBlockingStatus) is included for some assets as `.renderBlockingStatus`.
+
+This information is encoded as a "special value" in the resource's timings array.  It will be appended to the
+list of timings with a special prefix of `*a`.
+
+If set, it means the Render Blocking Status was `blocking`.
+
+Example:
+
+```text
+*a      // blocking
+```
+
+### `responseStatus`
+
+The [HTTP Response Status Code](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/responseStatus) is included for some assets as `.responseStatus`.
+
+This information is encoded as a "special value" in the resource's timings array.  It will be appended to the
+list of timings with a special prefix of `*b`.
+
+If set, it is the Base36 encoded HTTP Response Status Code.
+
+If included but no value is set, HTTP `200` is assumed.
+
+Example:
+
+```text
+*b[base36 code] // possible values
+*b              // HTTP 200
+*bb8            // HTTP 404
+```
+
 ### Resource Contributions
 
 We call contribution of a resource to a page the proportion of the total load time that can be blamed on that resource.
@@ -585,6 +718,12 @@ Or via ``gulp``:
 
 ## Version History
 
+* v1.4.0 - 2024-09-30
+    * Added support for .contentType
+    * Added support for .deliveryType
+    * Added support for .renderBlockingStatus
+    * Added support for .responseStatus
+    * Updated package dependencies
 * v1.3.3 - 2023-05-30
     * Add new initiator types: early-hints, ping, font
     * Fix workerStart extra trailing commas
