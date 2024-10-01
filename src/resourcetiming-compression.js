@@ -202,8 +202,7 @@
             "text/css": 11,
             "text/html": 12,
             "text/javascript": 13,
-            "text/plain": 14,
-            // TODO?
+            "text/plain": 14
         }
     };
 
